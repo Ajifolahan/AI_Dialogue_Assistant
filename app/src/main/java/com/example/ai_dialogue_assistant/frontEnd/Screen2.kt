@@ -1,0 +1,250 @@
+package com.example.ai_dialogue_assistant.frontEnd
+
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import com.example.ai_dialogue_assistant.backEnd.LanguagesViewModel
+import me.xdrop.fuzzywuzzy.FuzzySearch
+
+class Screen2 : Screen {
+    @OptIn(
+        ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class,
+        ExperimentalComposeUiApi::class
+    )
+    @Composable
+    override fun Content() {
+        val modifier = Modifier
+        //stateholders. recompose composable functions that are reading the state
+        var newTopic by remember { mutableStateOf("") }
+        val topics = remember {
+            mutableStateListOf(
+                "Greeting",
+                "Food", "Finance", "Travel", "Daily", "Introduction", "Shopping",
+                "Socializing", "Health", "Work", "Weather", "Technology", "Education"
+            )
+        }
+        //so that clicking outside the textfield will hide the keyboard
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val navigator = LocalNavigator.current
+        val context = LocalContext.current
+        var selectedLanguage by remember { mutableStateOf("") }
+        var selectedTopic by remember { mutableStateOf("") }
+
+
+        @Composable
+        fun TopicSelection(modifier: Modifier = Modifier, topics: SnapshotStateList<String>) {
+            FlowRow(modifier = modifier.padding(16.dp)) {
+                topics.forEach { topic ->
+                    Card(
+                        //pass it into the gemini api on click
+                        modifier = modifier
+                            .padding(8.dp)
+                            .background(if (topic == selectedTopic) Color.Blue else Color.LightGray),
+                        onClick = { selectedTopic = topic}
+                    ) {
+                        Text(
+                            text = topic,
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 15.sp,
+                            modifier = modifier.padding(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+
+        @Composable
+        fun LanguageDropdownMenu(modifier: Modifier = Modifier) {
+            var expanded by remember { mutableStateOf(false) }
+            var searchQuery by remember { mutableStateOf("") }
+            val viewModel: LanguagesViewModel = viewModel()
+            val languageNames = viewModel.languageNames.observeAsState().value ?: listOf()
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(32.dp)
+            ) {
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                ) {
+                    TextField(
+                        modifier = modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                            .clickable(onClick = { expanded = true }),
+                        value = selectedLanguage,
+                        onValueChange = { selectedLanguage = it },
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        label = { Text("Select a language", fontFamily = FontFamily.Serif) },
+                        textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Serif)
+                    )
+                    MaterialTheme(
+                        shapes = MaterialTheme.shapes.copy(
+                            extraSmall = RoundedCornerShape(
+                                16.dp
+                            )
+                        )
+                    ) {
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            TextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                label = { Text("Search", fontFamily = FontFamily.Serif) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            val filteredLanguageNames = if (searchQuery.isBlank()) {
+                                languageNames
+                            } else {
+                                languageNames.filter { FuzzySearch.ratio(it, searchQuery) >= 50
+                                }
+                            }
+                                filteredLanguageNames.forEach { languageName ->
+                                    DropdownMenuItem(
+                                        {
+                                            Text(
+                                                text = languageName,
+                                                fontSize = 15.sp,
+                                                fontFamily = FontFamily.Serif
+                                            )
+                                        },
+                                        onClick = {
+                                            selectedLanguage = languageName
+                                            expanded = false
+                                        },
+                                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                                    )
+                                }
+
+                        }
+                    }
+                }
+            }
+        }
+
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color.LightGray)
+                .clickable { keyboardController?.hide() }
+        ) {
+
+
+            Text(
+                "Choose a conversation topic:",
+                fontFamily = FontFamily.Serif,
+                fontSize = 20.sp,
+                modifier = modifier.align(Alignment.CenterHorizontally)
+            )
+
+            TopicSelection(topics = topics)
+            TextField(
+                value = newTopic,
+                onValueChange = { newTopic = it },
+                keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+                label = { Text("Add a new topic", fontFamily = FontFamily.Serif) },
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+            Button(
+                onClick = {
+                    if (newTopic.isNotBlank()) {
+                        topics.add(newTopic)
+                        newTopic = ""
+                    }
+                },
+                modifier = modifier
+                    .padding(horizontal = 16.dp)
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                //ADD INTO THE DATABASE OF TOPICS WHEN CLICKED, CREATE NEW CARDS FOR THE TOPICS AND DISPLAY WHEN A NEW TOPIC IS ADDED
+                Text("Add Topic", fontFamily = FontFamily.Serif)
+            }
+
+            Text(
+                "Choose a language:",
+                fontFamily = FontFamily.Serif,
+                fontSize = 20.sp,
+                modifier = modifier.align(Alignment.CenterHorizontally)
+            )
+            LanguageDropdownMenu()
+
+
+            Spacer(modifier = modifier.weight(1f))
+            Button(
+                onClick = {
+                    if (selectedLanguage.isNotBlank() && selectedTopic.isNotBlank()) {
+                        navigator?.push(ChatScreen())
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Please select a language and a topic",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                modifier = modifier
+                    .clip(RoundedCornerShape(50))
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    "Continue",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 20.sp
+                )
+            }
+        }
+    }
+}
+
+
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun GPreview() {
+//    ChoosingActivity()
+//}
