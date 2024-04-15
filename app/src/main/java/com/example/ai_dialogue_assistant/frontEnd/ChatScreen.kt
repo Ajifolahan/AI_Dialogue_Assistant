@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +24,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ai_dialogue_assistant.BuildConfig
+import com.google.ai.client.generativeai.GenerativeModel
+import kotlinx.coroutines.launch
 
 
 class ChatScreen : Screen {
@@ -31,6 +35,7 @@ class ChatScreen : Screen {
         val modifier = Modifier
         var userInput by remember { mutableStateOf("") }
         val conversationHistory = remember { mutableStateListOf<Message>() }
+        val scope = rememberCoroutineScope()
 
         Column(
             modifier = modifier
@@ -70,9 +75,21 @@ class ChatScreen : Screen {
                     onClick = {
                         if (userInput.isNotBlank()) {
                             conversationHistory.add(Message(userInput, "user"))
-                            userInput = ""
                             // TODO: Call the Gemini API here and add the AI's response to the conversation history
                             //use a coroutine to run it
+                            val generativeModel = GenerativeModel(
+                                modelName = "gemini-pro",
+                                apiKey = BuildConfig.GEMINI_KEY
+                            )
+
+                            val prompt = userInput
+                            scope.launch{
+                                val response = generativeModel.generateContent(prompt)
+                                print(response.text)
+                                response.text?.let { Message(it, "ai") }
+                                    ?.let { conversationHistory.add(it) }
+                            }
+                            userInput = ""
                         }
                     },
                     modifier = modifier.padding(start = 16.dp)
