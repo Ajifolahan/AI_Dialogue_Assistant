@@ -1,5 +1,6 @@
 package com.example.ai_dialogue_assistant.frontEnd
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,7 +24,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -40,7 +40,34 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import com.example.ai_dialogue_assistant.backEnd.LanguagesViewModel
 import me.xdrop.fuzzywuzzy.FuzzySearch
 
+fun saveTopics(context: Context, topics: List<String>) {
+    val sharedPreferences = context.getSharedPreferences("topics", Context.MODE_PRIVATE)
+    val editor = sharedPreferences.edit()
+    editor.putStringSet("topicList", topics.toSet())
+    editor.apply()
+}
+
+fun loadTopics(context: Context): MutableList<String> {
+    val sharedPreferences = context.getSharedPreferences("topics", Context.MODE_PRIVATE)
+    val topicSet = sharedPreferences.getStringSet("topicList", null)
+    return topicSet?.toMutableList() ?: mutableStateListOf(
+        "Greeting",
+        "Food", "Finance", "Travel", "Daily", "Introduction", "Shopping",
+        "Socializing", "Health", "Work", "Weather", "Technology", "Education"
+    )
+}
+
+fun deleteTopic(context: Context, topic: String) {
+    val sharedPreferences = context.getSharedPreferences("topics", Context.MODE_PRIVATE)
+    val editor = sharedPreferences.edit()
+    val topicsSet = sharedPreferences.getStringSet("topicList", null)
+    topicsSet?.remove(topic)
+    editor.putStringSet("topicList", topicsSet)
+    editor.apply()
+}
+
 class Screen2 : Screen {
+
     @OptIn(
         ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class,
         ExperimentalComposeUiApi::class
@@ -50,27 +77,19 @@ class Screen2 : Screen {
         val modifier = Modifier
         //stateholders. recompose composable functions that are reading the state
         var newTopic by remember { mutableStateOf("") }
-        val topics = remember {
-            mutableStateListOf(
-                "Greeting",
-                "Food", "Finance", "Travel", "Daily", "Introduction", "Shopping",
-                "Socializing", "Health", "Work", "Weather", "Technology", "Education"
-            )
-        }
         //so that clicking outside the textfield will hide the keyboard
         val keyboardController = LocalSoftwareKeyboardController.current
         val navigator = LocalNavigator.current
         val context = LocalContext.current
         var selectedLanguage by remember { mutableStateOf("") }
         var selectedTopic by remember { mutableStateOf("") }
-
+        var topics by remember { mutableStateOf(loadTopics(context)) }
 
         @Composable
-        fun TopicSelection(modifier: Modifier = Modifier, topics: SnapshotStateList<String>) {
+        fun TopicSelection(modifier: Modifier = Modifier, topics: List<String>) {
             FlowRow(modifier = modifier.padding(16.dp)) {
                 topics.forEach { topic ->
                     Card(
-                        //pass it into the gemini api on click
                         modifier = modifier
                             .padding(8.dp)
                             .background(if (topic == selectedTopic) Color.Blue else Color.LightGray),
@@ -193,6 +212,8 @@ class Screen2 : Screen {
                 onClick = {
                     if (newTopic.isNotBlank()) {
                         topics.add(newTopic)
+                        saveTopics(context, topics)
+//                        deleteTopic(context, "Gyn"). ONLY USE WHEN YOU WANT TO DELETE A TOPIC
                         newTopic = ""
                     }
                 },
@@ -200,7 +221,6 @@ class Screen2 : Screen {
                     .padding(horizontal = 16.dp)
                     .align(Alignment.CenterHorizontally)
             ) {
-                //ADD INTO THE DATABASE OF TOPICS WHEN CLICKED, CREATE NEW CARDS FOR THE TOPICS AND DISPLAY WHEN A NEW TOPIC IS ADDED
                 Text("Add Topic", fontFamily = FontFamily.Serif)
             }
 
@@ -217,11 +237,11 @@ class Screen2 : Screen {
             Button(
                 onClick = {
                     if (selectedLanguage.isNotBlank() && selectedTopic.isNotBlank()) {
-                        navigator?.push(ChatScreen())
+                        navigator?.push(ChatScreen(selectedLanguage, selectedTopic))
                     } else {
                         Toast.makeText(
                             context,
-                            "Please select a language and a topic",
+                            "Please select a language and a conversation topic",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -240,11 +260,3 @@ class Screen2 : Screen {
         }
     }
 }
-
-
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun GPreview() {
-//    ChoosingActivity()
-//}

@@ -1,5 +1,6 @@
 package com.example.ai_dialogue_assistant.backEnd
 
+import com.example.ai_dialogue_assistant.BuildConfig
 import com.example.ai_dialogue_assistant.backEnd.LanguageService.Companion.BASE_URL
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -20,6 +21,16 @@ object RetrofitClient {
                     .client(httpClient)
                     .build()
                     .create(LanguageService::class.java)
+
+    }
+
+    val pollyService: AmazonPollyApi by lazy {
+        Retrofit.Builder()
+            .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl(BuildConfig.API_POLLY)
+            .client(httpClient)
+            .build()
+            .create(AmazonPollyApi::class.java)
 
     }
 
