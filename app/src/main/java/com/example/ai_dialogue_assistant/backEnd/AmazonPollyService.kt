@@ -74,14 +74,18 @@ class AmazonPollyService(private val context: Context) {
                     val responseBody = response.body()?.string()
                     if (responseBody != null) {
                         val jsonObject = JSONObject(responseBody)
-                        val presignedUrl = jsonObject.getString("body")
-                        if (presignedUrl.isNotEmpty()) {
-                            cache[cacheKey] = presignedUrl
-                            playAudio(presignedUrl)
+                        if (jsonObject.has("body")) {
+                            val presignedUrl = jsonObject.getString("body")
+                            if (presignedUrl.isNotEmpty()) {
+                                cache[cacheKey] = presignedUrl
+                                playAudio(presignedUrl)
+                            }
+                        } else {
+                            Log.e("API Error", "No body")
                         }
                     }
                 } else {
-                    println("Error while using API")
+                    Log.e("API Error", "Response unsuccessful")
                 }
             }
 
