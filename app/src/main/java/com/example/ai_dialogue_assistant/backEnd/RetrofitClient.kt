@@ -1,7 +1,6 @@
 package com.example.ai_dialogue_assistant.backEnd
 
 import com.example.ai_dialogue_assistant.BuildConfig
-import com.example.ai_dialogue_assistant.backEnd.LanguageService.Companion.BASE_URL
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -13,14 +12,14 @@ object RetrofitClient {
 
     private val httpClient = OkHttpClient.Builder().addInterceptor(logging).build()
 
-            // Retrofit instance with the Gson converter factory and the OkHttpClient
-        val languageService: LanguageService by lazy {
-            Retrofit.Builder()
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .baseUrl(BASE_URL)
-                    .client(httpClient)
-                    .build()
-                    .create(LanguageService::class.java)
+    // Retrofit instance with the Gson converter factory and the OkHttpClient
+    val languageService: LanguageService by lazy {
+        Retrofit.Builder()
+            .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl(BuildConfig.API_LANGUAGES)
+            .client(httpClient)
+            .build()
+            .create(LanguageService::class.java)
 
     }
 

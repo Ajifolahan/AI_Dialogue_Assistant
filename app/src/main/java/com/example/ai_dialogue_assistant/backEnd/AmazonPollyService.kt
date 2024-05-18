@@ -1,7 +1,5 @@
 package com.example.ai_dialogue_assistant.backEnd
 
-import android.media.MediaPlayer
-import android.widget.Toast
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -56,7 +54,7 @@ class AmazonPollyService(private val context: Context) {
         val voiceId = getVoiceForLanguage(speaker)
         val cacheKey = "$text-$voiceId"
         //playing from a cache so we dont have to call the API twice and we are saving resources
-        // if needed we can implement a different type of caching- redis or memcached
+        // if needed we can implement a different type of caching- aws elasticache/memcached/regular database
         if (cache.containsKey(cacheKey)) {
             playAudio(cache[cacheKey]!!)
             return
