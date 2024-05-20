@@ -189,15 +189,12 @@ class Screen2 : Screen {
                 .background(Color.LightGray)
                 .clickable { keyboardController?.hide() }
         ) {
-
-
             Text(
                 "Choose a conversation topic:",
                 fontFamily = FontFamily.Serif,
                 fontSize = 20.sp,
                 modifier = modifier.align(Alignment.CenterHorizontally)
             )
-
             TopicSelection(topics = topics)
             TextField(
                 value = newTopic,
@@ -231,8 +228,6 @@ class Screen2 : Screen {
                 modifier = modifier.align(Alignment.CenterHorizontally)
             )
             LanguageDropdownMenu()
-
-
             Spacer(modifier = modifier.weight(1f))
             Button(
                 onClick = {

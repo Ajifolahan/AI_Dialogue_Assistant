@@ -44,6 +44,6 @@ class SpeechHandler(private val context: Context, private val onResult: (String)
         speechRecognizer.startListening(intent)
     }
 
-    //listen to the audio and write it out to the textfield,
+    //listen to the audio and write it out to the textfield
 }
 

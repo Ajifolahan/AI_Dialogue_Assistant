@@ -6,6 +6,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import android.content.Context
 import android.util.Log
+import android.util.LruCache
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -15,7 +16,7 @@ import org.json.JSONObject
 
 class AmazonPollyService(private val context: Context) {
     private var exoPlayer: ExoPlayer? = null
-    private val cache = mutableMapOf<String, String>()
+    private val cache = LruCache<String, String>(50)
 
     private fun getVoiceForLanguage(language: String): String {
 
@@ -39,6 +40,7 @@ class AmazonPollyService(private val context: Context) {
             "Norwegian Bokmal" -> "Liv"
             "Norwegian Nynorsk" -> "Liv"
             "Polish" -> "Ewa"
+            "Portuguese" -> "Ines"
             "Romanian, Moldavian, Moldovan" -> "Carmen"
             "Russian" -> "Tatyana"
             "Spanish, Castilian" -> "Conchita"
@@ -54,8 +56,7 @@ class AmazonPollyService(private val context: Context) {
         val voiceId = getVoiceForLanguage(speaker)
         val cacheKey = "$text-$voiceId"
         //playing from a cache so we dont have to call the API twice and we are saving resources
-        // if needed we can implement a different type of caching- aws elasticache/memcached/regular database
-        if (cache.containsKey(cacheKey)) {
+        if (cache[cacheKey] != null) {
             playAudio(cache[cacheKey]!!)
             return
         }
@@ -75,8 +76,9 @@ class AmazonPollyService(private val context: Context) {
                         if (jsonObject.has("body")) {
                             val presignedUrl = jsonObject.getString("body")
                             if (presignedUrl.isNotEmpty()) {
-                                cache[cacheKey] = presignedUrl
+                                cache.put(cacheKey, presignedUrl)
                                 playAudio(presignedUrl)
+//                                cachevalue()
                             }
                         } else {
                             Log.e("API Error", "No body")
@@ -109,6 +111,13 @@ class AmazonPollyService(private val context: Context) {
                 }
             })
             prepare()
+        }
+    }
+
+
+    fun cachevalue() {
+        cache.snapshot().forEach { (key, value) ->
+            println("Key: $key, Value: $value")
         }
     }
 }

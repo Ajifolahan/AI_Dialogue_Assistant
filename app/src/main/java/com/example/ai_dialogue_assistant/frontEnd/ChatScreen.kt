@@ -2,7 +2,9 @@ package com.example.ai_dialogue_assistant.frontEnd
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import com.example.ai_dialogue_assistant.BuildConfig
 import com.example.ai_dialogue_assistant.R
 import com.example.ai_dialogue_assistant.backEnd.AmazonPollyService
@@ -110,6 +113,8 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                 // Send the initial prompt to the AI
                 sendToAI(initialPrompt, conversationHistory, scope, listState)
             }
+            //notify users that they can change their keyboard language in settings
+            Toast.makeText(context, "You can change the keyboard language in settings", Toast.LENGTH_LONG).show()
         }
 
         Column(
@@ -164,6 +169,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                                 "Norwegian Bokmal",
                                 "Norwegian Nynorsk",
                                 "Polish",
+                                "Portuguese",
                                 "Romanian, Moldavian, Moldovan",
                                 "Russian",
                                 "Spanish, Castilian",
