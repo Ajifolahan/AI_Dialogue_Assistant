@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import com.example.ai_dialogue_assistant.backEnd.LanguagesViewModel
 import me.xdrop.fuzzywuzzy.FuzzySearch
 
 fun saveTopics(context: Context, topics: List<String>) {
@@ -54,6 +53,145 @@ fun loadTopics(context: Context): MutableList<String> {
         "Greeting",
         "Food", "Finance", "Travel", "Daily", "Introduction", "Shopping",
         "Socializing", "Health", "Work", "Weather", "Technology", "Education"
+    )
+}
+
+fun getLanguages(): List<String> {
+    return listOf(
+        "Afrikaans",
+        "Albanian",
+        "Amharic",
+        "Arabic",
+        "Armenian",
+        "Assamese",
+        "Aymara",
+        "Azerbaijani",
+        "Bambara",
+        "Basque",
+        "Belarusian",
+        "Bengali",
+        "Bhojpuri",
+        "Bosnian",
+        "Bulgarian",
+        "Catalan",
+        "Cebuano",
+        "Chinese (Simplified)",
+        "Chinese (Traditional)",
+        "Corsican",
+        "Croatian",
+        "Czech",
+        "Danish",
+        "Dhivehi",
+        "Dogri",
+        "Dutch",
+        "English",
+        "Esperanto",
+        "Estonian",
+        "Ewe",
+        "Filipino (Tagalog)",
+        "Finnish",
+        "French",
+        "Frisian",
+        "Galician",
+        "Georgian",
+        "German",
+        "Greek",
+        "Guarani",
+        "Gujarati",
+        "Haitian Creole",
+        "Hausa",
+        "Hawaiian",
+        "Hebrew",
+        "Hindi",
+        "Hmong",
+        "Hungarian",
+        "Icelandic",
+        "Igbo",
+        "Ilocano",
+        "Indonesian",
+        "Irish",
+        "Italian",
+        "Japanese",
+        "Javanese",
+        "Kannada",
+        "Kazakh",
+        "Khmer",
+        "Kinyarwanda",
+        "Konkani",
+        "Korean",
+        "Krio",
+        "Kurdish",
+        "Kurdish (Sorani)",
+        "Kyrgyz",
+        "Lao",
+        "Latin",
+        "Latvian",
+        "Lingala",
+        "Lithuanian",
+        "Luganda",
+        "Luxembourgish",
+        "Macedonian",
+        "Maithili",
+        "Malagasy",
+        "Malay",
+        "Malayalam",
+        "Maltese",
+        "Maori",
+        "Marathi",
+        "Meiteilon (Manipuri)",
+        "Mizo",
+        "Mongolian",
+        "Myanmar (Burmese)",
+        "Nepali",
+        "Norwegian",
+        "Nyanja (Chichewa)",
+        "Odia (Oriya)",
+        "Oromo",
+        "Pashto",
+        "Persian",
+        "Polish",
+        "Portuguese (Portugal, Brazil)",
+        "Punjabi",
+        "Quechua",
+        "Romanian",
+        "Russian",
+        "Samoan",
+        "Sanskrit",
+        "Scots Gaelic",
+        "Sepedi",
+        "Serbian",
+        "Sesotho",
+        "Shona",
+        "Sindhi",
+        "Sinhala (Sinhalese)",
+        "Slovak",
+        "Slovenian",
+        "Somali",
+        "Spanish",
+        "Sundanese",
+        "Swahili",
+        "Swedish",
+        "Tagalog (Filipino)",
+        "Tajik",
+        "Tamil",
+        "Tatar",
+        "Telugu",
+        "Thai",
+        "Tigrinya",
+        "Tsonga",
+        "Turkish",
+        "Turkmen",
+        "Twi (Akan)",
+        "Ukrainian",
+        "Urdu",
+        "Uyghur",
+        "Uzbek",
+        "Vietnamese",
+        "Welsh",
+        "Xhosa",
+        "Yiddish",
+        "Yoruba",
+        "Zulu"
     )
 }
 
@@ -111,8 +249,7 @@ class Screen2 : Screen {
         fun LanguageDropdownMenu(modifier: Modifier = Modifier) {
             var expanded by remember { mutableStateOf(false) }
             var searchQuery by remember { mutableStateOf("") }
-            val viewModel: LanguagesViewModel = viewModel()
-            val languageNames = viewModel.languageNames.observeAsState().value ?: listOf()
+            val languages = getLanguages()
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -154,9 +291,9 @@ class Screen2 : Screen {
                                 modifier = Modifier.fillMaxWidth()
                             )
                             val filteredLanguageNames = if (searchQuery.isBlank()) {
-                                languageNames
+                                languages
                             } else {
-                                languageNames.filter { FuzzySearch.ratio(it, searchQuery) >= 50
+                                languages.filter { FuzzySearch.ratio(it, searchQuery) >= 50
                                 }
                             }
                                 filteredLanguageNames.forEach { languageName ->

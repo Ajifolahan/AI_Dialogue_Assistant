@@ -13,15 +13,7 @@ object RetrofitClient {
     private val httpClient = OkHttpClient.Builder().addInterceptor(logging).build()
 
     // Retrofit instance with the Gson converter factory and the OkHttpClient
-    val languageService: LanguageService by lazy {
-        Retrofit.Builder()
-            .addConverterFactory(GsonConverterFactory.create())
-            .baseUrl(BuildConfig.API_LANGUAGES)
-            .client(httpClient)
-            .build()
-            .create(LanguageService::class.java)
 
-    }
 
     val pollyService: AmazonPollyApi by lazy {
         Retrofit.Builder()
