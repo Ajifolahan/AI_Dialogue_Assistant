@@ -152,8 +152,8 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
 
                         if (message.type == "ai" && listOf(
                                 "Arabic",
-                                "Dutch, Flemish",
-                                "Catalan, Valencian",
+                                "Dutch",
+                                "Catalan",
                                 "Chinese",
                                 "Danish",
                                 "English",
@@ -166,13 +166,11 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                                 "Japanese",
                                 "Korean",
                                 "Norwegian",
-                                "Norwegian Bokmal",
-                                "Norwegian Nynorsk",
                                 "Polish",
-                                "Portuguese",
-                                "Romanian, Moldavian, Moldovan",
+                                "Portuguese (Portugal, Brazil)",
+                                "Romanian",
                                 "Russian",
-                                "Spanish, Castilian",
+                                "Spanish",
                                 "Swedish",
                                 "Turkish",
                                 "Welsh"
