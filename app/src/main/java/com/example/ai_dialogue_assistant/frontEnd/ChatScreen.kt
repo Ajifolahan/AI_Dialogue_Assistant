@@ -2,14 +2,18 @@ package com.example.ai_dialogue_assistant.frontEnd
 
 import android.Manifest
 import android.app.Activity
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.runtime.Composable
-import cafe.adriel.voyager.core.screen.Screen
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -26,6 +30,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -43,14 +48,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
+import cafe.adriel.voyager.core.screen.Screen
 import com.example.ai_dialogue_assistant.BuildConfig
 import com.example.ai_dialogue_assistant.R
 import com.example.ai_dialogue_assistant.backEnd.AmazonPollyService
+import com.example.ai_dialogue_assistant.backEnd.GoogleTTSService
 import com.example.ai_dialogue_assistant.backEnd.SpeechHandler
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.BlockThreshold
 import com.google.ai.client.generativeai.type.HarmCategory
+import com.google.ai.client.generativeai.type.ResponseStoppedException
 import com.google.ai.client.generativeai.type.SafetySetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -67,6 +74,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
         val context = LocalContext.current
         val amazonPollyService = AmazonPollyService(context)
         // Mutable state to check if the RECORD_AUDIO permission is granted
+        val googleTTSService = GoogleTTSService(context) // Initialize GoogleTTSService
         val hasRecordAudioPermission = remember { mutableStateOf(false) }
         val requestCode = 200
 
@@ -78,10 +86,8 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
         ) {
             val harassmentSafety = SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.ONLY_HIGH)
             val hateSpeechSafety = SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.ONLY_HIGH)
-            val sexualSafety =
-                SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.ONLY_HIGH)
-            val dangerousSafety =
-                SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.ONLY_HIGH)
+            val sexualSafety = SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.ONLY_HIGH)
+            val dangerousSafety = SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.ONLY_HIGH)
 
             val generativeModel = GenerativeModel(
                 modelName = "gemini-pro",
@@ -93,16 +99,32 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                     dangerousSafety
                 )
             )
-            // Call AI and add its response to conversation history
-            val response = generativeModel.generateContent(message)
-            response.text?.let { Message(it, "ai") }?.let {
-                conversationHistory.add(it)
-                // Scroll to the bottom after adding AI response
-                scope.launch {
-                    listState.scrollToItem(conversationHistory.size - 1)
+
+            var attempt = 0
+            val maxAttempts = 3
+            while (attempt < maxAttempts) {
+                try {
+                    val response = generativeModel.generateContent(message)
+                    response.text?.let { Message(it, "ai") }?.let {
+                        conversationHistory.add(it)
+                        scope.launch {
+                            listState.scrollToItem(conversationHistory.size - 1)
+                        }
+                    }
+                    break
+                } catch (e: ResponseStoppedException) {
+                    attempt++
+                    Log.e("ChatScreen", "Attempt $attempt: Content generation stopped: ${e.message}")
+                    if (attempt >= maxAttempts) {
+                        Toast.makeText(context, "Content generation stopped after $attempt attempts: ${e.message}", Toast.LENGTH_LONG).show()
+                        break
+                    }
+                } catch (e: Exception) {
+                    Log.e("ChatScreen", "Error generating content: ${e.message}")
+                    Toast.makeText(context, "An error occurred: ${e.message}", Toast.LENGTH_LONG).show()
+                    break
                 }
             }
-
         }
 
         //conversation with the initial prompt
@@ -192,6 +214,20 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                                     modifier = modifier.size(32.dp)
                                 )
                             }
+                        } else if (message.type == "ai") {
+                            IconButton(
+                                onClick = {
+                                    googleTTSService.speak(message.text, language)
+                                }, modifier = modifier
+                                    .size(48.dp)
+                                    .weight(0.1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.PlayArrow,
+                                    contentDescription = "Play sound",
+                                    modifier = modifier.size(32.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -241,7 +277,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                         //if the permission is not granted, request it. This is needed because using just the android manifest file isn't working, permission needs to be requested in runtime
                         //and not before the app is installed
                         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                                ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.RECORD_AUDIO), requestCode)
+                            ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.RECORD_AUDIO), requestCode)
                         } else {
                             // If permission, update the state
                             hasRecordAudioPermission.value = true

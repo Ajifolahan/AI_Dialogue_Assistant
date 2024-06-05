@@ -4,7 +4,14 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Button
@@ -19,7 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,7 +40,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import me.xdrop.fuzzywuzzy.FuzzySearch
@@ -296,22 +301,22 @@ class Screen2 : Screen {
                                 languages.filter { FuzzySearch.ratio(it, searchQuery) >= 50
                                 }
                             }
-                                filteredLanguageNames.forEach { languageName ->
-                                    DropdownMenuItem(
-                                        {
-                                            Text(
-                                                text = languageName,
-                                                fontSize = 15.sp,
-                                                fontFamily = FontFamily.Serif
-                                            )
-                                        },
-                                        onClick = {
-                                            selectedLanguage = languageName
-                                            expanded = false
-                                        },
-                                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                                    )
-                                }
+                            filteredLanguageNames.forEach { languageName ->
+                                DropdownMenuItem(
+                                    {
+                                        Text(
+                                            text = languageName,
+                                            fontSize = 15.sp,
+                                            fontFamily = FontFamily.Serif
+                                        )
+                                    },
+                                    onClick = {
+                                        selectedLanguage = languageName
+                                        expanded = false
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                                )
+                            }
 
                         }
                     }

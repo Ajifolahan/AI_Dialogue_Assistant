@@ -19,7 +19,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
     }
 
     buildTypes {
@@ -31,59 +30,77 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
+
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/AL2.0"
+            excludes += "/META-INF/LGPL2.1"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "mozilla/public-suffix-list.txt"
         }
     }
 }
 
 dependencies {
-    //Retrofit
+    // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
-    //Compose viewModel
+    // Compose viewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 
-    //Compose LiveData
+    // Compose LiveData
     implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
 
-    //Voyager
+    // Voyager
     implementation("cafe.adriel.voyager:voyager-navigator:1.0.0")
     implementation("cafe.adriel.voyager:voyager-tab-navigator:1.0.0")
     implementation("cafe.adriel.voyager:voyager-transitions:1.0.0")
 
-    //fuzzy algo
+    // Fuzzy algo
     implementation("me.xdrop:fuzzywuzzy:1.3.1")
 
-    //gemini dependency
+    // Gemini dependency
     implementation("com.google.ai.client.generativeai:generativeai:0.2.2")
 
-    //coroutine
+    // Coroutine
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
-    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
 
-    //exoplayer
+    // ExoPlayer
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
+
+    // Google Cloud Text-to-Speech
+    implementation("com.google.cloud:google-cloud-texttospeech:1.3.0")
+    implementation("com.google.auth:google-auth-library-oauth2-http:0.26.0")
+    implementation("io.grpc:grpc-okhttp:1.38.1")
+    implementation("io.grpc:grpc-stub:1.38.1")
+    implementation("com.google.api:gax:1.58.0")
+    implementation("io.grpc:grpc-protobuf:1.38.1")
+    implementation("com.google.protobuf:protobuf-java:3.17.3")
+    implementation("com.google.api.grpc:proto-google-common-protos:2.5.1")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -93,6 +110,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.firebase.crashlytics.buildtools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

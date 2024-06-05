@@ -1,9 +1,5 @@
 package com.example.ai_dialogue_assistant.backEnd
 
-import okhttp3.ResponseBody
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import android.content.Context
 import android.util.Log
 import android.util.LruCache
@@ -11,7 +7,11 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import okhttp3.ResponseBody
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 
 class AmazonPollyService(private val context: Context) {
