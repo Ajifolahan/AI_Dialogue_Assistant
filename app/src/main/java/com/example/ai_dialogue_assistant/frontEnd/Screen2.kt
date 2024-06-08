@@ -63,15 +63,11 @@ fun loadTopics(context: Context): MutableList<String> {
 
 fun getLanguages(): List<String> {
     return listOf(
-        "Afrikaans",
         "Albanian",
-        "Amharic",
         "Arabic",
         "Armenian",
         "Assamese",
         "Aymara",
-        "Azerbaijani",
-        "Bambara",
         "Basque",
         "Belarusian",
         "Bengali",
@@ -96,7 +92,6 @@ fun getLanguages(): List<String> {
         "Filipino (Tagalog)",
         "Finnish",
         "French",
-        "Frisian",
         "Galician",
         "Georgian",
         "German",
@@ -114,13 +109,8 @@ fun getLanguages(): List<String> {
         "Igbo",
         "Ilocano",
         "Indonesian",
-        "Irish",
         "Italian",
         "Japanese",
-        "Javanese",
-        "Kannada",
-        "Kazakh",
-        "Khmer",
         "Kinyarwanda",
         "Konkani",
         "Korean",
@@ -134,29 +124,22 @@ fun getLanguages(): List<String> {
         "Lingala",
         "Lithuanian",
         "Luganda",
-        "Luxembourgish",
-        "Macedonian",
         "Maithili",
         "Malagasy",
         "Malay",
         "Malayalam",
-        "Maltese",
         "Maori",
         "Marathi",
         "Meiteilon (Manipuri)",
         "Mizo",
         "Mongolian",
-        "Myanmar (Burmese)",
         "Nepali",
         "Norwegian",
         "Nyanja (Chichewa)",
-        "Odia (Oriya)",
         "Oromo",
         "Pashto",
-        "Persian",
         "Polish",
         "Portuguese (Portugal, Brazil)",
-        "Punjabi",
         "Quechua",
         "Romanian",
         "Russian",
@@ -168,7 +151,6 @@ fun getLanguages(): List<String> {
         "Sesotho",
         "Shona",
         "Sindhi",
-        "Sinhala (Sinhalese)",
         "Slovak",
         "Slovenian",
         "Somali",
@@ -177,20 +159,13 @@ fun getLanguages(): List<String> {
         "Swahili",
         "Swedish",
         "Tagalog (Filipino)",
-        "Tajik",
-        "Tamil",
         "Tatar",
         "Telugu",
         "Thai",
-        "Tigrinya",
         "Tsonga",
         "Turkish",
         "Turkmen",
-        "Twi (Akan)",
         "Ukrainian",
-        "Urdu",
-        "Uyghur",
-        "Uzbek",
         "Vietnamese",
         "Welsh",
         "Xhosa",
@@ -221,7 +196,6 @@ class Screen2 : Screen {
         //stateholders. recompose composable functions that are reading the state
         var newTopic by remember { mutableStateOf("") }
         //so that clicking outside the textfield will hide the keyboard
-        val keyboardController = LocalSoftwareKeyboardController.current
         val navigator = LocalNavigator.current
         val context = LocalContext.current
         var selectedLanguage by remember { mutableStateOf("") }
@@ -329,7 +303,6 @@ class Screen2 : Screen {
             modifier = modifier
                 .fillMaxSize()
                 .background(Color.LightGray)
-                .clickable { keyboardController?.hide() }
         ) {
             Text(
                 "Choose a conversation topic:",
@@ -341,7 +314,6 @@ class Screen2 : Screen {
             TextField(
                 value = newTopic,
                 onValueChange = { newTopic = it },
-                keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
                 label = { Text("Add a new topic", fontFamily = FontFamily.Serif) },
                 modifier = modifier
                     .fillMaxWidth()

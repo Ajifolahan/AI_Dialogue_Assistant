@@ -51,8 +51,7 @@ import androidx.core.content.ContextCompat
 import cafe.adriel.voyager.core.screen.Screen
 import com.example.ai_dialogue_assistant.BuildConfig
 import com.example.ai_dialogue_assistant.R
-import com.example.ai_dialogue_assistant.backEnd.AmazonPollyService
-import com.example.ai_dialogue_assistant.backEnd.GoogleTTSService
+import com.example.ai_dialogue_assistant.backEnd.SpeakingService
 import com.example.ai_dialogue_assistant.backEnd.SpeechHandler
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.BlockThreshold
@@ -72,9 +71,8 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
         val scope = rememberCoroutineScope()
         val listState = rememberLazyListState()
         val context = LocalContext.current
-        val amazonPollyService = AmazonPollyService(context)
+        val speakingService = SpeakingService(context)
         // Mutable state to check if the RECORD_AUDIO permission is granted
-        val googleTTSService = GoogleTTSService(context) // Initialize GoogleTTSService
         val hasRecordAudioPermission = remember { mutableStateOf(false) }
         val requestCode = 200
 
@@ -174,12 +172,9 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
 
                         if (message.type == "ai" && listOf(
                                 "Arabic",
-                                "Dutch",
-                                "Catalan",
-                                "Chinese",
+                                "Chinese (Traditional)",
                                 "Danish",
                                 "English",
-                                "Finnish",
                                 "French",
                                 "German",
                                 "Hindi",
@@ -200,7 +195,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                         ) {
                             IconButton(
                                 onClick = {
-                                    amazonPollyService.speak(
+                                    speakingService.speakAmazonPolly(
                                         message.text,
                                         language
                                     )
@@ -214,10 +209,35 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                                     modifier = modifier.size(32.dp)
                                 )
                             }
-                        } else if (message.type == "ai") {
+                        } else if (message.type == "ai" && listOf(
+                                "Basque",
+                                "Bengali",
+                                "Bulgarian",
+                                "Catalan",
+                                "Czech",
+                                "Dutch",
+                                "Finnish",
+                                "Galician",
+                                "Greek",
+                                "Gujarati",
+                                "Hungarian",
+                                "Indonesian",
+                                "Latvian",
+                                "Lithuanian",
+                                "Malay",
+                                "Malayalam",
+                                "Marathi",
+                                "Serbian",
+                                "Slovak",
+                                "Telugu",
+                                "Thai",
+                                "Ukrainian",
+                                "Vietnamese"
+                            ).any { it.equals(language, ignoreCase = true) }
+                        ) {
                             IconButton(
                                 onClick = {
-                                    googleTTSService.speak(message.text, language)
+                                    speakingService.speakGoogleTTS(message.text, language)
                                 }, modifier = modifier
                                     .size(48.dp)
                                     .weight(0.1f)
