@@ -53,7 +53,7 @@ class startScreen: Screen {
             )
             Spacer(modifier = modifier.height(20.dp))
             Button(
-                onClick = { navigator?.push(Screen2())},
+                onClick = { navigator?.push(SignInScreen())},
                 modifier = modifier
                     .clip(RoundedCornerShape(50))
                     .padding(16.dp)

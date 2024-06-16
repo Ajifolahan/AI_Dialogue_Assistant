@@ -51,6 +51,9 @@ import androidx.core.content.ContextCompat
 import cafe.adriel.voyager.core.screen.Screen
 import com.example.ai_dialogue_assistant.BuildConfig
 import com.example.ai_dialogue_assistant.R
+import com.example.ai_dialogue_assistant.backEnd.API_Interface
+import com.example.ai_dialogue_assistant.backEnd.Conversation
+import com.example.ai_dialogue_assistant.backEnd.Message
 import com.example.ai_dialogue_assistant.backEnd.SpeakingService
 import com.example.ai_dialogue_assistant.backEnd.SpeechHandler
 import com.google.ai.client.generativeai.GenerativeModel
@@ -59,9 +62,19 @@ import com.google.ai.client.generativeai.type.HarmCategory
 import com.google.ai.client.generativeai.type.ResponseStoppedException
 import com.google.ai.client.generativeai.type.SafetySetting
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.util.Date
 
-data class ChatScreen(val language: String, val topic: String) : Screen {
+data class ChatScreen(
+    val language: String,
+    val topic: String,
+    val conversationId: String,
+    val userId: String
+) : Screen {
 
     @Composable
     override fun Content() {
@@ -72,10 +85,52 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
         val listState = rememberLazyListState()
         val context = LocalContext.current
         val speakingService = SpeakingService(context)
+        val apiService = API_Interface.create()
+
         // Mutable state to check if the RECORD_AUDIO permission is granted
         val hasRecordAudioPermission = remember { mutableStateOf(false) }
         val requestCode = 200
 
+        // adds messages to the database
+        fun addMessageToConversation(message: Message) {
+            CoroutineScope(Dispatchers.IO).launch {
+                apiService.addMessage(userId, conversationId, message).enqueue(object : Callback<Conversation> {
+                    override fun onResponse(call: Call<Conversation>, response: Response<Conversation>) {
+                        if (!response.isSuccessful) {
+                            Log.e("API_Interface", "Failed to add message: ${response.errorBody()?.string()}") // sanity check
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Conversation>, t: Throwable) {
+                        Log.e("API_Interface", "API call failed: ${t.message}")
+                    }
+                })
+            }
+        }
+
+        // gets the conversation history if the user has already started a conversation based on selected language and topic
+        fun fetchConversationHistory() {
+            CoroutineScope(Dispatchers.IO).launch {
+                apiService.getConversation(userId, conversationId).enqueue(object : Callback<Conversation> {
+                    override fun onResponse(call: Call<Conversation>, response: Response<Conversation>) {
+                        if (response.isSuccessful) {
+                            val conversation = response.body()
+                            conversation?.messages?.let {
+                                conversationHistory.addAll(it)
+                            }
+                        } else {
+                            Log.e("API_Interface", "Failed to fetch conversation: ${response.errorBody()?.string()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Conversation>, t: Throwable) {
+                        Log.e("API_Interface", "API call failed: ${t.message}")
+                    }
+                })
+            }
+        }
+
+        // Function to send message to AI and update UI
         suspend fun sendToAI(
             message: String,
             conversationHistory: MutableList<Message>,
@@ -88,7 +143,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
             val dangerousSafety = SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.ONLY_HIGH)
 
             val generativeModel = GenerativeModel(
-                modelName = "gemini-pro",
+                modelName = "gemini-1.5-pro",
                 apiKey = BuildConfig.GEMINI_KEY,
                 safetySettings = listOf(
                     harassmentSafety,
@@ -103,11 +158,13 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
             while (attempt < maxAttempts) {
                 try {
                     val response = generativeModel.generateContent(message)
-                    response.text?.let { Message(it, "ai") }?.let {
-                        conversationHistory.add(it)
+                    response.text?.let {
+                        val aiMessage = Message("ai", it, Date().toString())
+                        conversationHistory.add(aiMessage)
                         scope.launch {
                             listState.scrollToItem(conversationHistory.size - 1)
                         }
+                        addMessageToConversation(aiMessage)
                     }
                     break
                 } catch (e: ResponseStoppedException) {
@@ -127,13 +184,14 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
 
         //conversation with the initial prompt
         LaunchedEffect(Unit) {
+            fetchConversationHistory()
             if (conversationHistory.isEmpty()) {
                 val initialPrompt =
                     "Language: $language Topic: $topic. Begin a dialogue, staying on the topic $topic and using only this language $language. Just start the dialogue and allow me to respond. Don't carry on the conversation with yourself, let the conversation flow between us."
                 // Send the initial prompt to the AI
                 sendToAI(initialPrompt, conversationHistory, scope, listState)
             }
-            //notify users that they can change their keyboard language in settings
+            // Notify users that they can change their keyboard language in settings
             Toast.makeText(context, "You can change the keyboard language in settings", Toast.LENGTH_LONG).show()
         }
 
@@ -142,9 +200,9 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                 .fillMaxSize()
                 .background(Color.LightGray)
         ) {
-            //chat history
             LazyColumn(
-                state = listState, modifier = Modifier
+                state = listState,
+                modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
             ) {
@@ -156,21 +214,21 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                         Card(
                             shape = RoundedCornerShape(10.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (message.type == "user") Color.Cyan else MaterialTheme.colorScheme.surfaceVariant
+                                containerColor = if (message.sender == "user") Color.Cyan else MaterialTheme.colorScheme.surfaceVariant
                             ),
                             modifier = Modifier
                                 .padding(8.dp)
                                 .weight(0.9f)
                         ) {
                             Text(
-                                text = message.text,
+                                text = message.message,
                                 fontFamily = FontFamily.Serif,
                                 fontSize = 15.sp,
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
 
-                        if (message.type == "ai" && listOf(
+                        if (message.sender == "ai" && listOf(
                                 "Arabic",
                                 "Chinese (Traditional)",
                                 "Danish",
@@ -196,10 +254,11 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                             IconButton(
                                 onClick = {
                                     speakingService.speakAmazonPolly(
-                                        message.text,
+                                        message.message,
                                         language
                                     )
-                                }, modifier = modifier
+                                },
+                                modifier = modifier
                                     .size(48.dp)
                                     .weight(0.1f)
                             ) {
@@ -209,7 +268,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                                     modifier = modifier.size(32.dp)
                                 )
                             }
-                        } else if (message.type == "ai" && listOf(
+                        } else if (message.sender == "ai" && listOf(
                                 "Basque",
                                 "Bengali",
                                 "Bulgarian",
@@ -237,8 +296,9 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                         ) {
                             IconButton(
                                 onClick = {
-                                    speakingService.speakGoogleTTS(message.text, language)
-                                }, modifier = modifier
+                                    speakingService.speakGoogleTTS(message.message, language)
+                                },
+                                modifier = modifier
                                     .size(48.dp)
                                     .weight(0.1f)
                             ) {
@@ -258,8 +318,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                 modifier = modifier
                     .padding(16.dp)
                     .fillMaxWidth()
-            )
-            {
+            ) {
                 TextField(
                     value = userInput,
                     onValueChange = { userInput = it },
@@ -270,7 +329,9 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                 Button(
                     onClick = {
                         if (userInput.isNotBlank()) {
-                            conversationHistory.add(Message(userInput, "user"))
+                            val userMessage = Message("user", userInput, Date().toString())
+                            conversationHistory.add(userMessage)
+                            addMessageToConversation(userMessage)
                             val prompt =
                                 "$userInput. Continue this dialogue based on the listed response and only in this $language. Don't carry on the conversation with yourself, let the conversation flow between us."
                             userInput = ""
@@ -319,15 +380,4 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
             }
         }
     }
-
 }
-
-
-//to hold information about a message in the chat. text: content of the message, type: who sent the message- "user" or "AI".
-data class Message(val text: String, val type: String)
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PrevChatScreen() {
-//    ChatScreen(language = "English", topic = "Technology").Content()
-//}

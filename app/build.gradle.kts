@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    alias(libs.plugins.googleGmsGoogleServices)
 }
 
 android {
@@ -60,6 +61,7 @@ android {
     }
 }
 
+
 dependencies {
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -102,6 +104,10 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java:3.17.3")
     implementation("com.google.api.grpc:proto-google-common-protos:2.5.1")
 
+    // firebase
+    implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.firebase.auth)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -110,7 +116,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.firebase.crashlytics.buildtools)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
