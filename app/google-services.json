@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "550017493710",
+    "firebase_url": "https://ai-dialouge-assistant-default-rtdb.firebaseio.com",
+    "project_id": "ai-dialouge-assistant",
+    "storage_bucket": "ai-dialouge-assistant.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:550017493710:android:ea63381cf5e9215d787e9f",
+        "android_client_info": {
+          "package_name": "com.example.ai_dialogue_assistant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-LCZe2E2X-IF0ccyaGUTtvH0mef8DF7o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
