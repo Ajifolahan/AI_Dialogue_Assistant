@@ -82,7 +82,7 @@ dependencies {
     implementation("me.xdrop:fuzzywuzzy:1.3.1")
 
     // Gemini dependency
-    implementation("com.google.ai.client.generativeai:generativeai:0.2.2")
+    implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
 
     // Coroutine
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")

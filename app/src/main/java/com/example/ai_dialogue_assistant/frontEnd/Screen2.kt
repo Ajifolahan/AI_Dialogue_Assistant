@@ -196,6 +196,7 @@ class Screen2 : Screen {
         //stateholders. recompose composable functions that are reading the state
         var newTopic by remember { mutableStateOf("") }
         //so that clicking outside the textfield will hide the keyboard
+        val keyboardController = LocalSoftwareKeyboardController.current
         val navigator = LocalNavigator.current
         val context = LocalContext.current
         var selectedLanguage by remember { mutableStateOf("") }
@@ -303,6 +304,7 @@ class Screen2 : Screen {
             modifier = modifier
                 .fillMaxSize()
                 .background(Color.LightGray)
+                .clickable { keyboardController?.hide() }
         ) {
             Text(
                 "Choose a conversation topic:",
@@ -314,6 +316,7 @@ class Screen2 : Screen {
             TextField(
                 value = newTopic,
                 onValueChange = { newTopic = it },
+                keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
                 label = { Text("Add a new topic", fontFamily = FontFamily.Serif) },
                 modifier = modifier
                     .fillMaxWidth()
