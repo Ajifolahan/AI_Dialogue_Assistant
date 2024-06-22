@@ -17,6 +17,13 @@ interface API_Interface {
         @Path("conversationId") conversationId: String
     ): Call<Conversation>
 
+    @GET("/conversations/{userId}")
+    fun getConversations(
+        @Path("userId") userId: String
+    ): Call<Conversation>
+
+
+
     @POST("/conversations/{userId}/{conversationId}/messages")
     fun addMessage(
         @Path("userId") userId: String,
