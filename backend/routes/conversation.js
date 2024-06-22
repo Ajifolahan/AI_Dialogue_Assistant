@@ -14,6 +14,15 @@ router.post('/', async (req, res) => {
     }
 });
 
+// get all conversations from  the user 
+router.get('/:userId', async (req, res) => {  
+    try {
+        const conversations = await Conversation.find({ userId: req.params.userId });
+        res.send(conversations);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
 
 // Get a specific conversation by ID
 router.get('/:userId/:conversationId', async (req, res) => {  
