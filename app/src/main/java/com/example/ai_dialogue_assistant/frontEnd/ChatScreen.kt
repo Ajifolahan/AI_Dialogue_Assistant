@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,12 +21,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -44,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -94,39 +94,55 @@ data class ChatScreen(
         // adds messages to the database
         fun addMessageToConversation(message: Message) {
             CoroutineScope(Dispatchers.IO).launch {
-                apiService.addMessage(userId, conversationId, message).enqueue(object : Callback<Conversation> {
-                    override fun onResponse(call: Call<Conversation>, response: Response<Conversation>) {
-                        if (!response.isSuccessful) {
-                            Log.e("API_Interface", "Failed to add message: ${response.errorBody()?.string()}") // sanity check
+                apiService.addMessage(userId, conversationId, message)
+                    .enqueue(object : Callback<Conversation> {
+                        override fun onResponse(
+                            call: Call<Conversation>,
+                            response: Response<Conversation>
+                        ) {
+                            if (!response.isSuccessful) {
+                                Log.e(
+                                    "API_Interface",
+                                    "Failed to add message: ${response.errorBody()?.string()}"
+                                ) // sanity check
+                            }
                         }
-                    }
 
-                    override fun onFailure(call: Call<Conversation>, t: Throwable) {
-                        Log.e("API_Interface", "API call failed: ${t.message}")
-                    }
-                })
+                        override fun onFailure(call: Call<Conversation>, t: Throwable) {
+                            Log.e("API_Interface", "API call failed: ${t.message}")
+                        }
+                    })
             }
         }
 
         // gets the conversation history if the user has already started a conversation based on selected language and topic
         fun fetchConversationHistory() {
             CoroutineScope(Dispatchers.IO).launch {
-                apiService.getConversation(userId, conversationId).enqueue(object : Callback<Conversation> {
-                    override fun onResponse(call: Call<Conversation>, response: Response<Conversation>) {
-                        if (response.isSuccessful) {
-                            val conversation = response.body()
-                            conversation?.messages?.let {
-                                conversationHistory.addAll(it)
+                apiService.getConversation(userId, conversationId)
+                    .enqueue(object : Callback<Conversation> {
+                        override fun onResponse(
+                            call: Call<Conversation>,
+                            response: Response<Conversation>
+                        ) {
+                            if (response.isSuccessful) {
+                                val conversation = response.body()
+                                conversation?.messages?.let {
+                                    conversationHistory.addAll(it)
+                                }
+                            } else {
+                                Log.e(
+                                    "API_Interface",
+                                    "Failed to fetch conversation: ${
+                                        response.errorBody()?.string()
+                                    }"
+                                )
                             }
-                        } else {
-                            Log.e("API_Interface", "Failed to fetch conversation: ${response.errorBody()?.string()}")
                         }
-                    }
 
-                    override fun onFailure(call: Call<Conversation>, t: Throwable) {
-                        Log.e("API_Interface", "API call failed: ${t.message}")
-                    }
-                })
+                        override fun onFailure(call: Call<Conversation>, t: Throwable) {
+                            Log.e("API_Interface", "API call failed: ${t.message}")
+                        }
+                    })
             }
         }
 
@@ -139,8 +155,10 @@ data class ChatScreen(
         ) {
             val harassmentSafety = SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.ONLY_HIGH)
             val hateSpeechSafety = SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.ONLY_HIGH)
-            val sexualSafety = SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.ONLY_HIGH)
-            val dangerousSafety = SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.ONLY_HIGH)
+            val sexualSafety =
+                SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.ONLY_HIGH)
+            val dangerousSafety =
+                SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.ONLY_HIGH)
 
             val generativeModel = GenerativeModel(
                 modelName = "gemini-1.5-pro",
@@ -169,14 +187,22 @@ data class ChatScreen(
                     break
                 } catch (e: ResponseStoppedException) {
                     attempt++
-                    Log.e("ChatScreen", "Attempt $attempt: Content generation stopped: ${e.message}")
+                    Log.e(
+                        "ChatScreen",
+                        "Attempt $attempt: Content generation stopped: ${e.message}"
+                    )
                     if (attempt >= maxAttempts) {
-                        Toast.makeText(context, "Content generation stopped after $attempt attempts: ${e.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            context,
+                            "Content generation stopped after $attempt attempts: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
                         break
                     }
                 } catch (e: Exception) {
                     Log.e("ChatScreen", "Error generating content: ${e.message}")
-                    Toast.makeText(context, "An error occurred: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "An error occurred: ${e.message}", Toast.LENGTH_LONG)
+                        .show()
                     break
                 }
             }
@@ -192,19 +218,19 @@ data class ChatScreen(
                 sendToAI(initialPrompt, conversationHistory, scope, listState)
             }
             // Notify users that they can change their keyboard language in settings
-            Toast.makeText(context, "You can change the keyboard language in settings", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                "You can change the keyboard language in settings",
+                Toast.LENGTH_LONG
+            ).show()
         }
 
         Column(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.LightGray)
+            modifier = modifier.fillMaxSize()
         ) {
             LazyColumn(
                 state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                modifier = Modifier.weight(1f).fillMaxWidth()
             ) {
                 items(conversationHistory) { message ->
                     Row(
@@ -214,7 +240,7 @@ data class ChatScreen(
                         Card(
                             shape = RoundedCornerShape(10.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (message.sender == "user") Color.Cyan else MaterialTheme.colorScheme.surfaceVariant
+                                containerColor = if (message.sender == "user") Color(0xFF00785D) else Color(0xFF539BA9)
                             ),
                             modifier = Modifier
                                 .padding(8.dp)
@@ -223,7 +249,7 @@ data class ChatScreen(
                             Text(
                                 text = message.message,
                                 fontFamily = FontFamily.Serif,
-                                fontSize = 15.sp,
+                                fontSize = 17.sp,
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
@@ -323,7 +349,7 @@ data class ChatScreen(
                     value = userInput,
                     onValueChange = { userInput = it },
                     modifier = modifier.weight(1f),
-                    textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Serif)
+                    textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Serif, fontSize = 15.sp)
                 )
                 Spacer(modifier = modifier.width(8.dp))
                 Button(
@@ -344,9 +370,15 @@ data class ChatScreen(
                             }
                         }
                     },
-                    modifier = modifier
+                    colors = ButtonDefaults.buttonColors(Color(0xFFFDC323))
                 ) {
-                    Text("Send")
+                    Text(
+                        text ="Send",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
                 }
                 val speechHandler = remember {
                     SpeechHandler(context) { result ->
@@ -357,8 +389,16 @@ data class ChatScreen(
                     onClick = {
                         //if the permission is not granted, request it. This is needed because using just the android manifest file isn't working, permission needs to be requested in runtime
                         //and not before the app is installed
-                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                            ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.RECORD_AUDIO), requestCode)
+                        if (ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.RECORD_AUDIO
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            ActivityCompat.requestPermissions(
+                                context as Activity,
+                                arrayOf(Manifest.permission.RECORD_AUDIO),
+                                requestCode
+                            )
                         } else {
                             // If permission, update the state
                             hasRecordAudioPermission.value = true
@@ -368,7 +408,11 @@ data class ChatScreen(
                         if (hasRecordAudioPermission.value) {
                             speechHandler.startListening()
                         } else {
-                            Toast.makeText(context, "Please grant the RECORD_AUDIO permission to use this feature", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                "Please grant the RECORD_AUDIO permission to use this feature",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     }
                 ) {

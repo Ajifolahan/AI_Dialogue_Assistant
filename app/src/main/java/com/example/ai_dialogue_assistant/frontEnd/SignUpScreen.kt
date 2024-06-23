@@ -3,17 +3,24 @@ package com.example.ai_dialogue_assistant.frontEnd
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -41,101 +48,152 @@ class SignUpScreen() : Screen {
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.email),
-                        contentDescription = null
-                    )
-                },
-                modifier = Modifier.fillMaxWidth()
+            Image(
+                painter = painterResource(id = R.drawable.languagesss),
+                contentDescription = "Background Image",
+                modifier = Modifier
+                    .fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.password),
-                        contentDescription = null
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = {
-                        passwordVisible = !passwordVisible
-                    }) {
-                        val painter = painterResource(id = if (passwordVisible) R.drawable.eye_on else R.drawable.eye_off)
-                        Image(
-                            painter = painter,
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
-                        )
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                label = { Text("Confirm Password") },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.password),
-                        contentDescription = null
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation = if (confirmpasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = {
-                        confirmpasswordVisible = !confirmpasswordVisible
-                    }) {
-                        val painter = painterResource(id = if (confirmpasswordVisible) R.drawable.eye_on else R.drawable.eye_off)
-                        Image(
-                            painter = painter,
-                            contentDescription = if (confirmpasswordVisible) "Hide password" else "Show password"
-                        )
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    signUpViewModel.signUp(email, password, confirmPassword)
-                },
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Text("Sign Up")
-            }
+                Text(
+                    text = "Sign Up",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 32.sp,
+                    color = Color(0xFF32BFDB),
+                    textDecoration = TextDecoration.Underline
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            when (authState) {
-                is AuthState.Loading -> Text("Loading...")
-                is AuthState.Success -> Text("Sign Up Successful")
-                is AuthState.Error -> Text("Sign Up Failed: ${(authState as AuthState.Error).message}")
-                else -> {}
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = {
+                        Text(
+                            text = "Email",
+                            fontFamily = FontFamily.Serif,
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(fontFamily = FontFamily.Serif),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Magenta,
+                        unfocusedBorderColor = Color(0xFF00785D)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = {
+                        Text(
+                            text = "Password",
+                            fontFamily = FontFamily.Serif,
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(fontFamily = FontFamily.Serif),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Magenta,
+                        unfocusedBorderColor = Color(0xFF00785D)
+                    ),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            passwordVisible = !passwordVisible
+                        }) {
+                            val painter = painterResource(id = if (passwordVisible) R.drawable.eye_on else R.drawable.eye_off)
+                            Image(
+                                painter = painter,
+                                contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                            )
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = {
+                        Text(
+                            text = "Confirm Password",
+                            fontFamily = FontFamily.Serif,
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(fontFamily = FontFamily.Serif),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Magenta,
+                        unfocusedBorderColor = Color(0xFF00785D)
+                    ),
+                    visualTransformation = if (confirmpasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            confirmpasswordVisible = !confirmpasswordVisible
+                        }) {
+                            val painter = painterResource(id = if (confirmpasswordVisible) R.drawable.eye_on else R.drawable.eye_off)
+                            Image(
+                                painter = painter,
+                                contentDescription = if (confirmpasswordVisible) "Hide password" else "Show password"
+                            )
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        signUpViewModel.signUp(email, password, confirmPassword)
+                    },
+                    colors = ButtonDefaults.buttonColors(Color(0xFFFDC323))
+                ) {
+                    Text(
+                        text = "Create an Account",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                when (authState) {
+                    is AuthState.Loading -> Text(
+                        text = "Loading...",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.ExtraLight,
+                        color = Color(0xFF539BA9)
+                    )
+                    is AuthState.Success -> Text(
+                        text =  "Sign Up Successful",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.ExtraLight,
+                        color = Color(0xFF539BA9)
+                    )
+                    is AuthState.Error -> Text(
+                        text = "Sign Up Failed: ${(authState as AuthState.Error).message}",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.ExtraLight,
+                        color = Color(0xFF539BA9))
+                    else -> {}
+                }
             }
         }
     }

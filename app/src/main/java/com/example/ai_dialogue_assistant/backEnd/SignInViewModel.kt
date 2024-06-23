@@ -55,7 +55,7 @@ class SignInViewModel : ViewModel() {
             auth.sendPasswordResetEmail(email)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        _authState.value = AuthState.Success("Reset link sent to your email")
+                        _authState.value = AuthState.Success("Reset link sent to your email. If you don't see it, you do not have an account with us.")
                     } else {
                         val errorMessage = when (task.exception) {
                             is FirebaseAuthInvalidUserException -> "No account found with this email."
