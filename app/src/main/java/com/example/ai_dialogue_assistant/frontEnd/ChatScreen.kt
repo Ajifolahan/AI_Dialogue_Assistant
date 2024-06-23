@@ -73,10 +73,14 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
         val listState = rememberLazyListState()
         val context = LocalContext.current
         val amazonPollyService = AmazonPollyService(context)
-        // Mutable state to check if the RECORD_AUDIO permission is granted
-        val googleTTSService = GoogleTTSService(context) // Initialize GoogleTTSService
+        val googleTTSService = GoogleTTSService(context)
         val hasRecordAudioPermission = remember { mutableStateOf(false) }
         val requestCode = 200
+
+        LaunchedEffect(topic) {
+            // Retrieve existing messages if necessary (this part depends on your app's logic)
+
+        }
 
         suspend fun sendToAI(
             message: String,
@@ -105,7 +109,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
             while (attempt < maxAttempts) {
                 try {
                     val response = generativeModel.generateContent(message)
-                    response.text?.let { Message(it, "ai") }?.let {
+                    response.text?.let { Message(it, "ai", topic, language) }?.let {
                         conversationHistory.add(it)
                         scope.launch {
                             listState.scrollToItem(conversationHistory.size - 1)
@@ -127,15 +131,12 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
             }
         }
 
-        //conversation with the initial prompt
         LaunchedEffect(Unit) {
             if (conversationHistory.isEmpty()) {
                 val initialPrompt =
                     "Language: $language Topic: $topic. Begin a dialogue, staying on the topic $topic and using only this language $language. Just start the dialogue and allow me to respond. Don't carry on the conversation with yourself, let the conversation flow between us."
-                // Send the initial prompt to the AI
                 sendToAI(initialPrompt, conversationHistory, scope, listState)
             }
-            //notify users that they can change their keyboard language in settings
             Toast.makeText(context, "You can change the keyboard language in settings", Toast.LENGTH_LONG).show()
         }
 
@@ -144,7 +145,6 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                 .fillMaxSize()
                 .background(Color.LightGray)
         ) {
-            //chat history
             LazyColumn(
                 state = listState, modifier = Modifier
                     .weight(1f)
@@ -238,8 +238,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                 modifier = modifier
                     .padding(16.dp)
                     .fillMaxWidth()
-            )
-            {
+            ) {
                 TextField(
                     value = userInput,
                     onValueChange = { userInput = it },
@@ -250,11 +249,10 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                 Button(
                     onClick = {
                         if (userInput.isNotBlank()) {
-                            conversationHistory.add(Message(userInput, "user"))
+                            conversationHistory.add(Message(userInput, "user", topic, language))
                             val prompt =
                                 "$userInput. Continue this dialogue based on the listed response and only in this $language. Don't carry on the conversation with yourself, let the conversation flow between us."
                             userInput = ""
-                            // Scroll to the bottom after adding user message
                             scope.launch {
                                 listState.scrollToItem(conversationHistory.size - 1)
                             }
@@ -274,16 +272,12 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
                 }
                 IconButton(
                     onClick = {
-                        //if the permission is not granted, request it. This is needed because using just the android manifest file isn't working, permission needs to be requested in runtime
-                        //and not before the app is installed
                         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                             ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.RECORD_AUDIO), requestCode)
                         } else {
-                            // If permission, update the state
                             hasRecordAudioPermission.value = true
                         }
 
-                        // If permission, start the speech recognizer
                         if (hasRecordAudioPermission.value) {
                             speechHandler.startListening()
                         } else {
@@ -299,15 +293,7 @@ data class ChatScreen(val language: String, val topic: String) : Screen {
             }
         }
     }
-
 }
 
-
-//to hold information about a message in the chat. text: content of the message, type: who sent the message- "user" or "AI".
-data class Message(val text: String, val type: String)
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PrevChatScreen() {
-//    ChatScreen(language = "English", topic = "Technology").Content()
-//}
+// To hold information about a message in the chat. text: content of the message, type: who sent the message- "user" or "AI", topic: the topic of the conversation, language: the language used.
+data class Message(val text: String, val type: String, val topic: String, val language: String)
