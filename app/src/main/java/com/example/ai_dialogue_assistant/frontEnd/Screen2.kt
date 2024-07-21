@@ -12,53 +12,60 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import me.xdrop.fuzzywuzzy.FuzzySearch
 import com.example.ai_dialogue_assistant.backEnd.API_Interface
 import com.example.ai_dialogue_assistant.backEnd.Conversation
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import me.xdrop.fuzzywuzzy.FuzzySearch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import com.google.firebase.auth.FirebaseAuth
 import java.util.Date
 import java.util.UUID
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 
 fun saveTopics(context: Context, topics: List<String>) {
     val sharedPreferences = context.getSharedPreferences("topics", Context.MODE_PRIVATE)
@@ -123,6 +130,8 @@ class Screen2 : Screen {
         var selectedTopic by remember { mutableStateOf("") }
         var topics by remember { mutableStateOf(loadTopics(context)) }
         val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+        val drawerState = rememberDrawerState(DrawerValue.Closed)
+        val scope = rememberCoroutineScope()
 
         @Composable
         fun TopicSelection(modifier: Modifier = Modifier, topics: List<String>) {
@@ -219,186 +228,216 @@ class Screen2 : Screen {
             }
         }
 
-        Column(
-            verticalArrangement = Arrangement.Center,
-            modifier = modifier
-                .fillMaxSize()
-                .clickable { keyboardController?.hide() }
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                "Choose a conversation topic:",
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 20.sp,
-                modifier = modifier.align(Alignment.CenterHorizontally)
-            )
-            TopicSelection(topics = topics)
-            TextField(
-                value = newTopic,
-                onValueChange = { newTopic = it },
-                keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-                label = { Text("Add a new topic", fontFamily = FontFamily.Serif) },
-                textStyle = TextStyle(fontFamily = FontFamily.Serif),
-                modifier = modifier.fillMaxWidth().padding(16.dp)
-            )
-            Button(
-                onClick = {
-                    if (newTopic.isNotBlank()) {
-                        topics.add(newTopic)
-                        saveTopics(context, topics)
-                        // deleteTopic(context, "Gyn"). ONLY USE WHEN YOU WANT TO DELETE A TOPIC
-                        newTopic = ""
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                HamburgerMenu(
+                    onConversationClick = { conversation ->
+                        navigator?.push(
+                            ChatScreen(
+                                conversation.language,
+                                conversation.topic,
+                                conversation.conversationId,
+                                auth.currentUser!!.uid
+                            )
+                        )
+                        scope.launch { drawerState.close() }
                     }
-                },
-                modifier = modifier
-                    .padding(horizontal = 16.dp)
-                    .align(Alignment.CenterHorizontally),
-                colors = ButtonDefaults.buttonColors(Color(0xFFFDC323))
-            ) {
-                Text(
-                    "Add Topic",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
                 )
-            }
+            },
+            content = {
+                Column(
+                    verticalArrangement = Arrangement.Top,
+                    modifier = modifier
+                        .fillMaxSize()
+                        .clickable { keyboardController?.hide() }
+                ) {
+                    IconButton(onClick = {
+                        scope.launch { drawerState.open() }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "Hamburger Menu"
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    //Spacer(modifier = Modifier.height(2.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Choose a conversation topic:",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp,
+                        modifier = modifier.align(Alignment.CenterHorizontally)
+                    )
+                    TopicSelection(topics = topics)
+                    TextField(
+                        value = newTopic,
+                        onValueChange = { newTopic = it },
+                        keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+                        label = { Text("Add a new topic", fontFamily = FontFamily.Serif) },
+                        textStyle = TextStyle(fontFamily = FontFamily.Serif),
+                        modifier = modifier.fillMaxWidth().padding(16.dp)
+                    )
+                    Button(
+                        onClick = {
+                            if (newTopic.isNotBlank()) {
+                                topics.add(newTopic)
+                                saveTopics(context, topics)
+                                // deleteTopic(context, "Gyn"). ONLY USE WHEN YOU WANT TO DELETE A TOPIC
+                                newTopic = ""
+                            }
+                        },
+                        modifier = modifier
+                            .padding(horizontal = 16.dp)
+                            .align(Alignment.CenterHorizontally),
+                        colors = ButtonDefaults.buttonColors(Color(0xFFFDC323))
+                    ) {
+                        Text(
+                            "Add Topic",
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
 
-            Text(
-                "Choose a language:",
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 20.sp,
-                modifier = modifier.align(Alignment.CenterHorizontally)
-            )
-            LanguageDropdownMenu()
-            Spacer(modifier = Modifier.height(25.dp))
-            Button(
-                onClick = {
-                    if (selectedLanguage.isNotBlank() && selectedTopic.isNotBlank()) {
-                        val apiService = API_Interface.create()
-                        val userId = auth.currentUser!!.uid
-                        val conversationId =
-                            UUID.nameUUIDFromBytes("$userId-$selectedTopic-$selectedLanguage".toByteArray())
-                                .toString() // I could probably be doing this better another way.
+                    //Spacer(modifier = Modifier.height(2.dp))
 
-                        CoroutineScope(Dispatchers.IO).launch {
-                            apiService.getConversation(userId, conversationId)
-                                .enqueue(object : Callback<Conversation> {
-                                    override fun onResponse(
-                                        call: Call<Conversation>,
-                                        response: Response<Conversation>
-                                    ) {
-                                        if (response.isSuccessful) {
-                                            val existingConversation = response.body()
-                                            if (existingConversation != null) {
-                                                // then conversation exists, carry on with it.
-                                                navigator?.push(
-                                                    ChatScreen(
-                                                        existingConversation.language,
-                                                        existingConversation.topic,
-                                                        existingConversation.conversationId,
-                                                        userId
-                                                    )
-                                                )
-                                            }
-                                        } else {
-                                            // Conversation does not exist, create a new one
-                                            val newConversation = Conversation(
-                                                userId = userId,
-                                                topic = selectedTopic,
-                                                language = selectedLanguage,
-                                                conversationId = conversationId,
-                                                messages = listOf(),
-                                                createdAt = Date().toString(),
-                                                updatedAt = Date().toString()
-                                            )
-                                            apiService.createConversation(newConversation)
-                                                .enqueue(object : Callback<Conversation> {
-                                                    override fun onResponse(
-                                                        call: Call<Conversation>,
-                                                        response: Response<Conversation>
-                                                    ) {
-                                                        if (response.isSuccessful) {
-                                                            response.body()?.let { conv ->
-                                                                navigator?.push(
-                                                                    ChatScreen(
-                                                                        conv.language,
-                                                                        conv.topic,
-                                                                        conv.conversationId,
-                                                                        userId
-                                                                    )
-                                                                )
-                                                            }
-                                                        } else {
-                                                            val errorMessage =
-                                                                response.errorBody()?.string()
-                                                            Toast.makeText(
-                                                                context,
-                                                                "Failed to create conversation: $errorMessage",
-                                                                Toast.LENGTH_LONG
-                                                            ).show()
-                                                        }
-                                                    }
+                    Text(
+                        "Choose a language:",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp,
+                        modifier = modifier.align(Alignment.CenterHorizontally)
+                    )
+                    LanguageDropdownMenu()
+                    //Spacer(modifier = Modifier.height(2.dp))
+                    Button(
+                        onClick = {
+                            if (selectedLanguage.isNotBlank() && selectedTopic.isNotBlank()) {
+                                val apiService = API_Interface.create()
+                                val userId = auth.currentUser!!.uid
+                                val conversationId =
+                                    UUID.nameUUIDFromBytes("$userId-$selectedTopic-$selectedLanguage".toByteArray())
+                                        .toString() // I could probably be doing this better another way.
 
-                                                    override fun onFailure(
-                                                        call: Call<Conversation>,
-                                                        t: Throwable
-                                                    ) {
-                                                        Toast.makeText(
-                                                            context,
-                                                            "API call failed: ${t.message}",
-                                                            Toast.LENGTH_LONG
-                                                        ).show()
-                                                        Log.d(
-                                                            "Screen2",
-                                                            "API_Service_Create, API call failed: ${t.message})"
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    apiService.getConversation(userId, conversationId)
+                                        .enqueue(object : Callback<Conversation> {
+                                            override fun onResponse(
+                                                call: Call<Conversation>,
+                                                response: Response<Conversation>
+                                            ) {
+                                                if (response.isSuccessful) {
+                                                    val existingConversation = response.body()
+                                                    if (existingConversation != null) {
+                                                        // then conversation exists, carry on with it.
+                                                        navigator?.push(
+                                                            ChatScreen(
+                                                                existingConversation.language,
+                                                                existingConversation.topic,
+                                                                existingConversation.conversationId,
+                                                                userId
+                                                            )
                                                         )
                                                     }
-                                                })
-                                        }
-                                    }
+                                                } else {
+                                                    // Conversation does not exist, create a new one
+                                                    val newConversation = Conversation(
+                                                        userId = userId,
+                                                        topic = selectedTopic,
+                                                        language = selectedLanguage,
+                                                        conversationId = conversationId,
+                                                        messages = listOf(),
+                                                        createdAt = Date().toString(),
+                                                        updatedAt = Date().toString()
+                                                    )
+                                                    apiService.createConversation(newConversation)
+                                                        .enqueue(object : Callback<Conversation> {
+                                                            override fun onResponse(
+                                                                call: Call<Conversation>,
+                                                                response: Response<Conversation>
+                                                            ) {
+                                                                if (response.isSuccessful) {
+                                                                    response.body()?.let { conv ->
+                                                                        navigator?.push(
+                                                                            ChatScreen(
+                                                                                conv.language,
+                                                                                conv.topic,
+                                                                                conv.conversationId,
+                                                                                userId
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                } else {
+                                                                    val errorMessage =
+                                                                        response.errorBody()?.string()
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Failed to create conversation: $errorMessage",
+                                                                        Toast.LENGTH_LONG
+                                                                    ).show()
+                                                                }
+                                                            }
 
-                                    override fun onFailure(call: Call<Conversation>, t: Throwable) {
-                                        Toast.makeText(
-                                            context,
-                                            "API call failed: ${t.message}",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        Log.d(
-                                            "Screen2",
-                                            "API_Service_GET, API call failed: ${t.message})"
-                                        )
-                                    }
-                                })
-                        }
-                    } else {
-                        Toast.makeText(
-                            context,
-                            "Please select a language and a conversation topic",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                                                            override fun onFailure(
+                                                                call: Call<Conversation>,
+                                                                t: Throwable
+                                                            ) {
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "API call failed: ${t.message}",
+                                                                    Toast.LENGTH_LONG
+                                                                ).show()
+                                                                Log.d(
+                                                                    "Screen2",
+                                                                    "API_Service_Create, API call failed: ${t.message})"
+                                                                )
+                                                            }
+                                                        })
+                                                }
+                                            }
+
+                                            override fun onFailure(call: Call<Conversation>, t: Throwable) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "API call failed: ${t.message}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                                Log.d(
+                                                    "Screen2",
+                                                    "API_Service_GET, API call failed: ${t.message})"
+                                                )
+                                            }
+                                        })
+                                }
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Please select a language and a conversation topic",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
+                        modifier = modifier
+                            .clip(RoundedCornerShape(50))
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(Color(0xFFFDC323))
+                    )
+                    {
+                        Text(
+                            "Continue",
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
                     }
-                },
-                modifier = modifier
-                    .clip(RoundedCornerShape(50))
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(Color(0xFFFDC323))
-            )
-            {
-                Text(
-                    "Continue",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
+                    Spacer(modifier = Modifier.weight(6f))
+                }
             }
-        }
+        )
     }
 }

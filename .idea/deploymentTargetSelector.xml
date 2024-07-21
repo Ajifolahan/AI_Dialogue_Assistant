@@ -4,14 +4,11 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="MainActivity">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-06-16T08:05:59.912974Z">
+        <DropdownSelection timestamp="2024-06-22T03:55:13.835975Z">
           <Target type="DEFAULT_BOOT">
-            <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/kevinrodriguez/.android/avd/Pixel_8_Pro_API_33.avd" />
-            </handle>
+            <template>
+              <DeviceId pluginId="FirebaseDirectAccess" type="TEMPLATE" identifier="model_id=lynx/33" />
+            </template>
           </Target>
         </DropdownSelection>
         <DialogSelection />

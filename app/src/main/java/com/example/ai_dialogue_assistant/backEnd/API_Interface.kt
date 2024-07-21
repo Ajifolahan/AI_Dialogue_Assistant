@@ -3,8 +3,10 @@ package com.example.ai_dialogue_assistant.backEnd
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.*
+import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface API_Interface {
     @POST("/conversations")
@@ -21,6 +23,11 @@ interface API_Interface {
     fun getConversations(
         @Path("userId") userId: String
     ): Call<Conversation>
+
+    @GET("/conversations/{userId}")
+    fun getAllConversations(
+        @Path("userId") userId: String
+    ): Call<List<Conversation>>
 
 
 
