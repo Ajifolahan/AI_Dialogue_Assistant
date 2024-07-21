@@ -1,17 +1,21 @@
 package com.example.ai_dialogue_assistant.frontEnd
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -31,10 +35,12 @@ import com.example.ai_dialogue_assistant.backEnd.SignUpViewModel
 class SignUpScreen() : Screen {
 
     @Composable
+    @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
     override fun Content() {
         val signUpViewModel: SignUpViewModel = viewModel()
         val authState by signUpViewModel.authState.collectAsState()
         val navigator = LocalNavigator.current
+        val keyboardController = LocalSoftwareKeyboardController.current
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var confirmPassword by remember { mutableStateOf("") }
@@ -50,8 +56,9 @@ class SignUpScreen() : Screen {
 
 
         Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
+            modifier = Modifier.fillMaxSize().clickable { keyboardController?.hide() },
+
+            ) {
             Image(
                 painter = painterResource(id = R.drawable.languagesss),
                 contentDescription = "Background Image",

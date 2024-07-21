@@ -2,9 +2,19 @@ package com.example.ai_dialogue_assistant.frontEnd
 
 import android.util.Log
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -34,6 +45,8 @@ fun HamburgerMenu(
     onConversationClick: (Conversation) -> Unit
 ) {
     var conversations by remember { mutableStateOf(listOf<Conversation>()) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
 
     fun fetchConversations() {
         val apiService = API_Interface.create()
@@ -41,22 +54,23 @@ fun HamburgerMenu(
         val userId = auth.currentUser?.uid
         if (userId != null) {
             CoroutineScope(Dispatchers.IO).launch {
-                apiService.getAllConversations(userId).enqueue(object : Callback<List<Conversation>> {
-                    override fun onResponse(
-                        call: Call<List<Conversation>>,
-                        response: Response<List<Conversation>>
-                    ) {
-                        if (response.isSuccessful) {
-                            conversations = response.body() ?: listOf()
-                        } else {
-                            Log.e("HamburgerMenu", "Failed to fetch conversations")
+                apiService.getAllConversations(userId)
+                    .enqueue(object : Callback<List<Conversation>> {
+                        override fun onResponse(
+                            call: Call<List<Conversation>>,
+                            response: Response<List<Conversation>>
+                        ) {
+                            if (response.isSuccessful) {
+                                conversations = response.body() ?: listOf()
+                            } else {
+                                Log.e("HamburgerMenu", "Failed to fetch conversations")
+                            }
                         }
-                    }
 
-                    override fun onFailure(call: Call<List<Conversation>>, t: Throwable) {
-                        Log.e("HamburgerMenu", "API call failed: ${t.message}")
-                    }
-                })
+                        override fun onFailure(call: Call<List<Conversation>>, t: Throwable) {
+                            Log.e("HamburgerMenu", "API call failed: ${t.message}")
+                        }
+                    })
             }
         }
     }
@@ -66,19 +80,56 @@ fun HamburgerMenu(
     }
 
     ModalDrawerSheet {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)) {
-            Text("Conversations", fontWeight = FontWeight.Bold, fontSize = 20.sp, fontFamily = FontFamily.Serif, modifier = Modifier.padding(16.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Text(
+                "Conversations",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                fontFamily = FontFamily.Serif,
+                modifier = Modifier.padding(16.dp)
+            )
             conversations.forEach { conversation ->
-                Text(
-                    text = "${conversation.topic} - ${conversation.language}",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .clickable { onConversationClick(conversation) }
-                        .padding(8.dp),
-                    color = Color.Black
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${conversation.topic} - ${conversation.language}",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 17.sp,
+                        modifier = Modifier
+                            .clickable { onConversationClick(conversation) }
+                            .padding(8.dp),
+                        color = Color.Black
+                    )
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Delete conversation", tint = Color(0xFFFDC323))
+                    }
+                }
+            }
+
+            if (showDeleteDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    text = { Text(text = "Are you sure you want to delete this conversation?", fontFamily = FontFamily.Serif) },
+                    confirmButton = {
+                        Button(onClick = {
+                          //api call
+                            showDeleteDialog = false
+                        }, colors = ButtonDefaults.buttonColors(Color(0xFFFDC323)) ) {
+                            Text(text = "Confirm", fontFamily = FontFamily.Serif)
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showDeleteDialog = false }, colors = ButtonDefaults.buttonColors(Color(0xFFFDC323))) {
+                            Text(text = "Cancel", fontFamily = FontFamily.Serif)
+                        }
+                    }
                 )
             }
         }

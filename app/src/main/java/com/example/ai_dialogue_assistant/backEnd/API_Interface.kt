@@ -4,6 +4,7 @@ import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -11,7 +12,6 @@ import retrofit2.http.Path
 interface API_Interface {
     @POST("/conversations")
     fun createConversation(@Body conversation: Conversation): Call<Conversation>
-
 
     @GET("/conversations/{userId}/{conversationId}")
     fun getConversation(
@@ -37,6 +37,12 @@ interface API_Interface {
         @Path("conversationId") conversationId: String,
         @Body message: Message
     ): Call<Conversation>
+
+    @DELETE("/conversations/{userId}/{conversationId}")
+    fun deleteConversation(
+        @Path("userId") userId: String,
+        @Path("conversationId") conversationId: String
+    ): Call<Unit>
 
     companion object {
         // API URL - RUN THE BACKEND FIRST

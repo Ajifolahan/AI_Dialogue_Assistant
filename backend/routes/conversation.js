@@ -52,4 +52,17 @@ router.post('/:userId/:conversationId/messages', async (req, res) => {
     }
 });
 
+//delete convo
+router.delete('/:userId/:conversationId', async (req, res) => {
+    try {
+        const conversation = await Conversation.findOneAndDelete({ userId: req.params.userId, conversationId: req.params.conversationId });
+        if (!conversation) {
+            return res.status(404).send();
+        }
+        res.send(conversation);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+}
+
 module.exports = router;

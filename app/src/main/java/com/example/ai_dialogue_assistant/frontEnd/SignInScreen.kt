@@ -5,14 +5,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -34,10 +37,12 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 class SignInScreen() : Screen {
 
     @Composable
+    @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
     override fun Content() {
         val signInViewModel: SignInViewModel = viewModel()
         val authState by signInViewModel.authState.collectAsState()
         val navigator = LocalNavigator.current
+        val keyboardController = LocalSoftwareKeyboardController.current
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var passwordVisible by remember { mutableStateOf(false) }
@@ -51,7 +56,8 @@ class SignInScreen() : Screen {
 
         Box(
             modifier = Modifier.fillMaxSize()
-        ) {
+                .clickable { keyboardController?.hide() },
+            ) {
             Image(
                 painter = painterResource(id = R.drawable.languagesss),
                 contentDescription = "Background Image",
