@@ -3,13 +3,20 @@ package com.example.ai_dialogue_assistant.frontEnd
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,10 +47,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -67,6 +76,7 @@ import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.InputStream
 import java.util.Date
 
 data class ChatScreen(
@@ -79,7 +89,7 @@ data class ChatScreen(
     @Composable
     override fun Content() {
         val modifier = Modifier
-        var userInput by remember { mutableStateOf("") }
+        var userInput by remember { mutableStateOf(TextFieldValue("")) }
         val conversationHistory = remember { mutableStateListOf<Message>() }
         val scope = rememberCoroutineScope()
         val listState = rememberLazyListState()
@@ -91,7 +101,18 @@ data class ChatScreen(
         val hasRecordAudioPermission = remember { mutableStateOf(false) }
         val requestCode = 200
 
-        // adds messages to the database
+        var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+        var selectedImageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+        val imagePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                selectedImageUri = it
+                val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+                selectedImageBitmap = BitmapFactory.decodeStream(inputStream)
+            }
+        }
+
+        // Adds messages to the database
         fun addMessageToConversation(message: Message) {
             CoroutineScope(Dispatchers.IO).launch {
                 apiService.addMessage(userId, conversationId, message)
@@ -115,7 +136,7 @@ data class ChatScreen(
             }
         }
 
-        // gets the conversation history if the user has already started a conversation based on selected language and topic
+        // Gets the conversation history if the user has already started a conversation based on selected language and topic
         fun fetchConversationHistory() {
             CoroutineScope(Dispatchers.IO).launch {
                 apiService.getConversation(userId, conversationId)
@@ -208,7 +229,7 @@ data class ChatScreen(
             }
         }
 
-        //conversation with the initial prompt
+        // Conversation with the initial prompt
         LaunchedEffect(Unit) {
             fetchConversationHistory()
             if (conversationHistory.isEmpty()) {
@@ -339,56 +360,79 @@ data class ChatScreen(
                 }
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
                 modifier = modifier
                     .padding(16.dp)
                     .fillMaxWidth()
             ) {
-                TextField(
-                    value = userInput,
-                    onValueChange = { userInput = it },
-                    modifier = modifier.weight(1f),
-                    textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Serif, fontSize = 15.sp)
-                )
-                Spacer(modifier = modifier.width(8.dp))
-                Button(
-                    onClick = {
-                        if (userInput.isNotBlank()) {
-                            val userMessage = Message("user", userInput, Date().toString())
-                            conversationHistory.add(userMessage)
-                            addMessageToConversation(userMessage)
-                            val prompt =
-                                "$userInput. Continue this dialogue based on the listed response and only in this $language. Don't carry on the conversation with yourself, let the conversation flow between us."
-                            userInput = ""
-                            // Scroll to the bottom after adding user message
-                            scope.launch {
-                                listState.scrollToItem(conversationHistory.size - 1)
-                            }
-                            scope.launch {
-                                sendToAI(prompt, conversationHistory, scope, listState)
-                            }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(Color(0xFFFDC323))
-                ) {
-                    Text(
-                        text ="Send",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                Button(onClick = { imagePickerLauncher.launch("image/*") }) {
+                    Text("Pick Image")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                selectedImageBitmap?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = "Selected Image",
+                        modifier = Modifier
+                            .size(200.dp)
+                            .align(Alignment.CenterHorizontally)
                     )
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = modifier.fillMaxWidth()
+                ) {
+                    TextField(
+                        value = userInput,
+                        onValueChange = { userInput = it },
+                        modifier = modifier.weight(1f),
+                        textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Serif, fontSize = 15.sp)
+                    )
+                    Spacer(modifier = modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            if (userInput.text.isNotBlank()) {
+                                val userMessage = Message("user", userInput.text, Date().toString())
+                                conversationHistory.add(userMessage)
+                                addMessageToConversation(userMessage)
+                                val prompt =
+                                    "${userInput.text}. Continue this dialogue based on the listed response and only in this $language. Don't carry on the conversation with yourself, let the conversation flow between us."
+                                userInput = TextFieldValue("")
+                                // Scroll to the bottom after adding user message
+                                scope.launch {
+                                    listState.scrollToItem(conversationHistory.size - 1)
+                                }
+                                scope.launch {
+                                    sendToAI(prompt, conversationHistory, scope, listState)
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(Color(0xFFFDC323))
+                    ) {
+                        Text(
+                            text = "Send",
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
+                }
+
                 val speechHandler = remember {
                     SpeechHandler(context) { result ->
-                        userInput = result
+                        userInput = TextFieldValue(result)
                     }
                 }
                 IconButton(
                     onClick = {
-                        //if the permission is not granted, request it. This is needed because using just the android manifest file isn't working, permission needs to be requested in runtime
-                        //and not before the app is installed
+                        // If the permission is not granted, request it. This is needed because using just the android manifest file isn't working, permission needs to be requested in runtime
+                        // and not before the app is installed
                         if (ContextCompat.checkSelfPermission(
                                 context,
                                 Manifest.permission.RECORD_AUDIO
