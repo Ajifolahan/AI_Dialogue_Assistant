@@ -149,6 +149,7 @@ class Screen2 : Screen {
                             text = topic,
                             fontFamily = FontFamily.Serif,
                             fontSize = 15.sp,
+                            color = if (topic == selectedTopic) Color.Magenta else Color.Black,
                             modifier = modifier.padding(16.dp)
                         )
                     }

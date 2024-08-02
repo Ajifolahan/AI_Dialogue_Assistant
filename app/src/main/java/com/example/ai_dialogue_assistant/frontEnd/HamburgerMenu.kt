@@ -46,7 +46,7 @@ fun HamburgerMenu(
 ) {
     var conversations by remember { mutableStateOf(listOf<Conversation>()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-
+    var conversationToDelete by remember { mutableStateOf<Conversation?>(null) }
 
     fun fetchConversations() {
         val apiService = API_Interface.create()
@@ -68,6 +68,30 @@ fun HamburgerMenu(
                         }
 
                         override fun onFailure(call: Call<List<Conversation>>, t: Throwable) {
+                            Log.e("HamburgerMenu", "API call failed: ${t.message}")
+                        }
+                    })
+            }
+        }
+    }
+
+    fun deleteConversation(conversation: Conversation) {
+        val apiService = API_Interface.create()
+        val auth = FirebaseAuth.getInstance()
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                apiService.deleteConversation(userId, conversation.conversationId)
+                    .enqueue(object : Callback<Unit> {
+                        override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                            if (response.isSuccessful) {
+                                conversations = conversations.filter { it.conversationId != conversation.conversationId }
+                            } else {
+                                Log.e("HamburgerMenu", "Failed to delete conversation")
+                            }
+                        }
+
+                        override fun onFailure(call: Call<Unit>, t: Throwable) {
                             Log.e("HamburgerMenu", "API call failed: ${t.message}")
                         }
                     })
@@ -107,19 +131,22 @@ fun HamburgerMenu(
                             .padding(8.dp),
                         color = Color.Black
                     )
-                    IconButton(onClick = { showDeleteDialog = true }) {
+                    IconButton(onClick = {
+                        conversationToDelete = conversation
+                        showDeleteDialog = true
+                    }) {
                         Icon(Icons.Filled.Delete, contentDescription = "Delete conversation", tint = Color(0xFFFDC323))
                     }
                 }
             }
 
-            if (showDeleteDialog) {
+            if (showDeleteDialog && conversationToDelete != null) {
                 AlertDialog(
                     onDismissRequest = { showDeleteDialog = false },
                     text = { Text(text = "Are you sure you want to delete this conversation?", fontFamily = FontFamily.Serif) },
                     confirmButton = {
                         Button(onClick = {
-                          //api call
+                            deleteConversation(conversationToDelete!!)
                             showDeleteDialog = false
                         }, colors = ButtonDefaults.buttonColors(Color(0xFFFDC323)) ) {
                             Text(text = "Confirm", fontFamily = FontFamily.Serif)
