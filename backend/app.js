@@ -4,6 +4,7 @@ App js file used to run the user app - most of this was auto generated and only 
 // needed modules 
 var createError = require('http-errors');
 var express = require('express');
+const serverless = require("serverless-http");
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
@@ -13,7 +14,6 @@ let conversationRouter = require('./routes/conversation');
 
 // way of connecting to the db - this was fun to play with... 
 let uri = `mongodb+srv://${config.database.username}:${config.database.password}@${config.database.host}`;
-console.log(uri);
 // Connect using mongoose
 // some of the code appears to be decapricated with the lts version of Node... 
 (async function connectToMongoDB() {
@@ -60,4 +60,4 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-module.exports = app;
+module.exports.handler = serverless(app);
