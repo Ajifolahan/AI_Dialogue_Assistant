@@ -46,7 +46,6 @@ interface API_Interface {
     ): Call<Unit>
 
     companion object {
-        // API URL - RUN THE BACKEND FIRST
         private const val BASE_URL = BuildConfig.VERCEL_URL
 
         fun create(): API_Interface {
