@@ -1,5 +1,6 @@
 package com.example.ai_dialogue_assistant.backEnd
 
+import com.example.ai_dialogue_assistant.BuildConfig
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -46,7 +47,7 @@ interface API_Interface {
 
     companion object {
         // API URL - RUN THE BACKEND FIRST
-        private const val BASE_URL = "http://10.0.2.2:3000"
+        private const val BASE_URL = BuildConfig.VERCEL_URL
 
         fun create(): API_Interface {
             val retrofit = Retrofit.Builder()
