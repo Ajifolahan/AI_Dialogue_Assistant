@@ -64,6 +64,7 @@ import com.google.ai.client.generativeai.type.SafetySetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -86,6 +87,8 @@ data class ChatScreen(
         val context = LocalContext.current
         val speakingService = SpeakingService(context)
         val apiService = API_Interface.create()
+        var suppressInitialMessage by remember { mutableStateOf(false) }
+
 
         // Mutable state to check if the RECORD_AUDIO permission is granted
         val hasRecordAudioPermission = remember { mutableStateOf(false) }
@@ -208,22 +211,49 @@ data class ChatScreen(
             }
         }
 
+        suspend fun checkLastMessageFromAI(userId: String, conversationId: String): Boolean {
+            return suspendCancellableCoroutine { continuation ->
+                apiService.checkLastMessageFromAI(userId, conversationId).enqueue(object : Callback<Map<String, Boolean>> {
+                    override fun onResponse(call: Call<Map<String, Boolean>>, response: Response<Map<String, Boolean>>) {
+                        if (response.isSuccessful) {
+                            val suppressInitialMessage = response.body()?.get("suppressInitialMessage") ?: false
+                            continuation.resume(suppressInitialMessage) {}
+                        } else {
+                            Log.e("ChatScreen", "Failed to check last message: ${response.errorBody()?.string()}")
+                            continuation.resume(false) {}
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Map<String, Boolean>>, t: Throwable) {
+                        Log.e("ChatScreen", "API call failed: ${t.message}")
+                        continuation.resume(false) {}
+                    }
+                })
+            }
+        }
+
+
         //conversation with the initial prompt
         LaunchedEffect(Unit) {
             fetchConversationHistory()
-            if (conversationHistory.isEmpty()) {
+
+            val suppressInitialMessage = checkLastMessageFromAI(userId, conversationId)
+            if (!suppressInitialMessage) {
                 val initialPrompt =
                     "Language: $language Topic: $topic. Begin a dialogue, staying on the topic $topic and using only this language $language. Just start the dialogue and allow me to respond. Don't carry on the conversation with yourself, let the conversation flow between us."
                 // Send the initial prompt to the AI
                 sendToAI(initialPrompt, conversationHistory, scope, listState)
             }
-            // Notify users that they can change their keyboard language in settings
+
+            // Notify users that they can change the keyboard language in settings
             Toast.makeText(
                 context,
                 "You can change the keyboard language in settings",
                 Toast.LENGTH_LONG
             ).show()
         }
+
+
 
         Column(
             modifier = modifier.fillMaxSize()
@@ -425,7 +455,6 @@ data class ChatScreen(
         }
     }
 }
-
 
 
 

@@ -29,7 +29,11 @@ interface API_Interface {
         @Path("userId") userId: String
     ): Call<List<Conversation>>
 
-
+    @GET("/conversations/check-conversation/{userId}/{conversationId}")
+    fun checkLastMessageFromAI(
+        @Path("userId") userId: String,
+        @Path("conversationId") conversationId: String
+    ): Call<Map<String, Boolean>>
 
     @POST("/conversations/{userId}/{conversationId}/messages")
     fun addMessage(

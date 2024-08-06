@@ -52,6 +52,27 @@ router.post('/:userId/:conversationId/messages', async (req, res) => {
     }
 });
 
+router.get('/check-conversation/:userId/:conversationId', async (req, res) => {
+    const { userId, conversationId } = req.params;
+
+    try {
+        const conversation = await Conversation.findOne({ userId, conversationId });
+
+        if (!conversation || conversation.messages.length === 0) {
+            return res.json({ suppressInitialMessage: false });
+        }
+
+        const lastMessage = conversation.messages[conversation.messages.length - 1];
+        const suppressInitialMessage = lastMessage.sender === 'ai';
+
+        res.json({ suppressInitialMessage });
+    } catch (error) {
+        console.error('Error checking conversation:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
 //delete convo
 router.delete('/:userId/:conversationId', async (req, res) => {
     try {
