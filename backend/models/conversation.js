@@ -8,13 +8,21 @@ const messageSchema = new mongoose.Schema({
     },
     message: {
         type: String,
-        required: true
-    }, timestamop: {
+        required: function () {
+             return !this.imagePath; // message is required only if imagePath is not provided
+        }
+//        required: true
+    },
+    timestamp: {
         type: Date,
         default: Date.now,
         required: true
+    },
+    imagePath: {
+        type: String
     }
 });
+
 
 const conversationSchema = new mongoose.Schema({
     userId: {

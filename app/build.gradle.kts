@@ -104,6 +104,8 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java:3.17.3")
     implementation("com.google.api.grpc:proto-google-common-protos:2.5.1")
 
+    implementation("io.coil-kt:coil-compose:2.0.0")
+
     // firebase
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.firebase.auth)

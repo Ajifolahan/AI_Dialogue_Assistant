@@ -1,6 +1,9 @@
 let express = require('express');
 let router = express.Router();
 let Conversation = require('../models/conversation');
+let multer = require('multer');
+let path = require('path');
+let upload = multer({ dest: 'uploads/' });
 
 // Create a new conversation
 router.post('/', async (req, res) => {  
@@ -38,17 +41,35 @@ router.get('/:userId/:conversationId', async (req, res) => {
 });
 
 // Add a message to a conversation
-router.post('/:userId/:conversationId/messages', async (req, res) => {  
+router.post('/:userId/:conversationId/messages', upload.single('image'), async (req, res) => {
     try {
         const conversation = await Conversation.findOne({ userId: req.params.userId, conversationId: req.params.conversationId });
         if (!conversation) {
-            return res.status(404).send();
+            return res.status(404).send({ error: "Conversation not found." });
         }
-        conversation.messages.push(req.body);
+
+        // Extract and parse the message
+        let message = JSON.parse(req.body.message);
+
+        // Validate that message and sender are present
+        if (!message.message && !req.file) {
+            return res.status(400).send({ error: "Message or image is required." });
+        }
+        if (!message.sender) {
+            return res.status(400).send({ error: "Sender is required." });
+        }
+
+        if (req.file) {
+            // If an image is provided, add its path to the message
+            message.imagePath = req.file.path;
+        }
+
+        conversation.messages.push(message);
         await conversation.save();
         res.send(conversation);
     } catch (error) {
-        res.status(400).send(error);
+        console.error('Error adding message to conversation:', error);
+        res.status(400).send({ error: error.message });
     }
 });
 

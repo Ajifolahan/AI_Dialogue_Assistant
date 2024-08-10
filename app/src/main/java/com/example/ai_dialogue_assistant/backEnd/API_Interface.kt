@@ -1,13 +1,16 @@
 package com.example.ai_dialogue_assistant.backEnd
 
 import com.example.ai_dialogue_assistant.BuildConfig
+import okhttp3.MultipartBody
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface API_Interface {
@@ -36,11 +39,13 @@ interface API_Interface {
         @Path("conversationId") conversationId: String
     ): Call<Map<String, Boolean>>
 
+    @Multipart
     @POST("/conversations/{userId}/{conversationId}/messages")
-    fun addMessage(
+    fun addMessageWithImage(
         @Path("userId") userId: String,
         @Path("conversationId") conversationId: String,
-        @Body message: Message
+        @Part message: MultipartBody.Part,
+        @Part image: MultipartBody.Part? = null
     ): Call<Conversation>
 
     @DELETE("/conversations/{userId}/{conversationId}")

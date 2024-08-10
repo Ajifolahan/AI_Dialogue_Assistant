@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -261,8 +260,6 @@ class Screen2 : Screen {
                             contentDescription = "Hamburger Menu"
                         )
                     }
-                    Spacer(modifier = Modifier.weight(1f))
-                    //Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
                         "Choose a conversation topic:",
@@ -303,7 +300,6 @@ class Screen2 : Screen {
                         )
                     }
 
-                    //Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
                         "Choose a language:",
@@ -313,7 +309,7 @@ class Screen2 : Screen {
                         modifier = modifier.align(Alignment.CenterHorizontally)
                     )
                     LanguageDropdownMenu()
-                    //Spacer(modifier = Modifier.height(2.dp))
+
                     Button(
                         onClick = {
                             if (selectedLanguage.isNotBlank() && selectedTopic.isNotBlank()) {
@@ -436,7 +432,6 @@ class Screen2 : Screen {
                             color = Color.Black
                         )
                     }
-                    Spacer(modifier = Modifier.weight(6f))
                 }
             }
         )
