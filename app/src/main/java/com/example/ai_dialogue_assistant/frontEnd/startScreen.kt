@@ -62,7 +62,7 @@ class startScreen: Screen {
                         .fillMaxWidth()
                 ) {
                     Text(
-                        text = "LangAI",
+                        text = "AI Connect",
                         fontFamily = FontFamily.Serif,
                         fontSize = 50.sp,
                         fontWeight = FontWeight.ExtraBold,
@@ -70,7 +70,7 @@ class startScreen: Screen {
                     )
                     Spacer(modifier = modifier.height(10.dp))
                     Text(
-                        text = "Unlock Fluency with AI-driven Realistic Dialogues",
+                        text = "Bridging Language Barriers with AI",
                         fontFamily = FontFamily.Serif,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraLight,
